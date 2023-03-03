@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -7,10 +7,11 @@
  * @module typing/input
  */
 
-import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
+import { Plugin } from '@ckeditor/ckeditor5-core';
+import { env } from '@ckeditor/ckeditor5-utils';
+
 import InsertTextCommand from './inserttextcommand';
 import InsertTextObserver, { type ViewDocumentInsertTextEvent } from './inserttextobserver';
-import env from '@ckeditor/ckeditor5-utils/src/env';
 
 import type { Model } from '@ckeditor/ckeditor5-engine';
 
@@ -19,8 +20,6 @@ import './typingconfig';
 
 /**
  * Handles text input coming from the keyboard or other input methods.
- *
- * @extends module:core/plugin~Plugin
  */
 export default class Input extends Plugin {
 	/**
@@ -92,7 +91,7 @@ export default class Input extends Plugin {
 				selection: model.createSelection( modelRanges )
 			};
 
-			// @if CK_DEBUG_TYPING // if ( window.logCKETyping ) {
+			// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
 			// @if CK_DEBUG_TYPING // 	console.log( '%c[Input]%c Execute insertText:',
 			// @if CK_DEBUG_TYPING // 		'font-weight: bold; color: green;', '',
 			// @if CK_DEBUG_TYPING // 		insertText,
@@ -116,10 +115,13 @@ export default class Input extends Plugin {
 					return;
 				}
 
-				// @if CK_DEBUG_TYPING // if ( window.logCKETyping ) {
+				// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
+				// @if CK_DEBUG_TYPING // 	const firstPositionPath = modelSelection.getFirstPosition()!.path;
+				// @if CK_DEBUG_TYPING // 	const lastPositionPath = modelSelection.getLastPosition()!.path;
+
 				// @if CK_DEBUG_TYPING // 	console.log( '%c[Input]%c KeyDown 229 -> model.deleteContent()',
 				// @if CK_DEBUG_TYPING // 		'font-weight: bold; color: green;', '',
-				// @if CK_DEBUG_TYPING // 		`[${ modelSelection.getFirstPosition().path }]-[${ modelSelection.getLastPosition().path }]`
+				// @if CK_DEBUG_TYPING // 		`[${ firstPositionPath }]-[${ lastPositionPath }]`
 				// @if CK_DEBUG_TYPING // 	);
 				// @if CK_DEBUG_TYPING // }
 
@@ -133,10 +135,13 @@ export default class Input extends Plugin {
 					return;
 				}
 
-				// @if CK_DEBUG_TYPING // if ( window.logCKETyping ) {
+				// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
+				// @if CK_DEBUG_TYPING // 	const firstPositionPath = modelSelection.getFirstPosition()!.path;
+				// @if CK_DEBUG_TYPING // 	const lastPositionPath = modelSelection.getLastPosition()!.path;
+
 				// @if CK_DEBUG_TYPING // 	console.log( '%c[Input]%c Composition start -> model.deleteContent()',
 				// @if CK_DEBUG_TYPING // 		'font-weight: bold; color: green;', '',
-				// @if CK_DEBUG_TYPING // 		`[${ modelSelection.getFirstPosition().path }]-[${ modelSelection.getLastPosition().path }]`
+				// @if CK_DEBUG_TYPING // 		`[${ firstPositionPath }]-[${ lastPositionPath }]`
 				// @if CK_DEBUG_TYPING // 	);
 				// @if CK_DEBUG_TYPING // }
 
@@ -147,16 +152,21 @@ export default class Input extends Plugin {
 }
 
 declare module '@ckeditor/ckeditor5-core' {
-	interface CommandsMap {
-		insertText: InsertTextCommand;
-	}
-
 	interface PluginsMap {
 		[ Input.pluginName ]: Input;
 	}
 }
 
 function deleteSelectionContent( model: Model, insertTextCommand: InsertTextCommand ): void {
+	// By relying on the state of the input command we allow disabling the entire input easily
+	// by just disabling the input command. We could’ve used here the delete command but that
+	// would mean requiring the delete feature which would block loading one without the other.
+	// We could also check the editor.isReadOnly property, but that wouldn't allow to block
+	// the input without blocking other features.
+	if ( !insertTextCommand.isEnabled ) {
+		return;
+	}
+
 	const buffer = insertTextCommand.buffer;
 
 	buffer.lock();

@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -8,7 +8,7 @@
 'use strict';
 
 const path = require( 'path' );
-const { getChangesForVersion, getChangelog } = require( '@ckeditor/ckeditor5-dev-env/lib/release-tools/utils/changelog' );
+const { getChangesForVersion, getChangelog } = require( '@ckeditor/ckeditor5-dev-release-tools' );
 
 const ROOT_DIRECTORY = path.join( __dirname, '..', '..' );
 const VERSIONS_TO_PRINT = 3;

@@ -4,7 +4,7 @@
 			"name": "General HTML Support",
 			"className": "GeneralHtmlSupport",
 			"description": "Allows enabling unsupported HTML features at low cost.",
-			"docs": "features/general-html-support.html",
+			"docs": "features/html/general-html-support.html",
 			"path": "src/generalhtmlsupport.js",
 			"htmlOutput": [
 				{
@@ -17,7 +17,7 @@
 			]
 		},
 		{
-			"name": "Data Filter",
+			"name": "Data filter",
 			"className": "DataFilter",
 			"description": "Adds support for enabling and disabling HTML features and their attributes. Part of General HTML Support feature.",
 			"path": "src/datafilter.js",
@@ -32,7 +32,7 @@
 			]
 		},
 		{
-			"name": "Data Schema",
+			"name": "Data schema",
 			"className": "DataSchema",
 			"description": "Holds representation of the extended HTML document type definitions. Part of General HTML Support feature.",
 			"path": "src/dataschema.js"
@@ -41,7 +41,7 @@
 			"name": "HTML comment",
 			"className": "HtmlComment",
 			"description": "Preserves the HTML comments in the editor data.",
-			"docs": "features/general-html-support.html#html-comments",
+			"docs": "features/html/html-comments.html",
 			"path": "src/htmlcomment.js",
 			"htmlOutput": [
 				{

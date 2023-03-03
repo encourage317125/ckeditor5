@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -257,6 +257,15 @@ describe( 'image utils', () => {
 					it( 'should return a matcherPattern object if the element is an "image"', () => {
 						element = writer.createElement( 'img', { src: 'sample.jpg' } );
 						writer.appendChild( element, writer.createElement( 'figure', { class: 'image' } ) );
+
+						expect( matcherPattern( element ) ).to.deep.equal( {
+							name: true,
+							attributes: [ 'src' ]
+						} );
+					} );
+
+					it( 'should return a matcherPattern object if the element has `display:block` style', () => {
+						element = writer.createElement( 'img', { src: 'sample.jpg', style: 'display:block' } );
 
 						expect( matcherPattern( element ) ).to.deep.equal( {
 							name: true,

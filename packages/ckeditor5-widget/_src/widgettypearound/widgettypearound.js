@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -232,6 +232,10 @@ export default class WidgetTypeAround extends Plugin {
 			// Filter out non-widgets and inline widgets.
 			if ( isTypeAroundWidget( viewElement, data.item, schema ) ) {
 				injectUIIntoWidget( conversionApi.writer, buttonTitles, viewElement );
+
+				viewElement.getCustomProperty( 'widgetLabel' ).push( () => {
+					return this.isEnabled ? t( 'Press Enter to type after or press Shift + Enter to type before the widget' ) : '';
+				} );
 			}
 		}, { priority: 'low' } );
 	}

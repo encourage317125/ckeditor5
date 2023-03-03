@@ -5,11 +5,7 @@ category: features
 
 {@snippet features/build-select-all-source}
 
-The select all feature allows selecting the entire content of the WYSIWYG editor using the <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>A</kbd> keystroke or the toolbar button. It is mostly useful when you need to copy all the content to another document or want to clear the editor area easily.
-
-<info-box info>
-	This feature is enabled by default in all {@link installation/getting-started/predefined-builds predefined builds} as a keyboard shortcut. See the [installation](#installation) section for information on adding a toolbar button to your editor.
-</info-box>
+The select all feature lets you select the entire content using the <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>A</kbd> keystroke or a toolbar button. This way you can clear or copy all the content in one move.
 
 ## Demo
 
@@ -25,14 +21,10 @@ Press <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>A</kbd> or use the toolbar button {@ic
 	This demo only presents a limited set of features. Visit the {@link examples/builds/full-featured-editor full-featured editor example} to see more in action.
 </info-box>
 
-## Related features
-
-* {@link features/keyboard-support Keyboard shortcuts} &ndash; Check other popular keyboard shortcuts supported by CKEditor 5.
-
 ## Installation
 
 <info-box info>
-	This feature is enabled by default in all builds (loaded by the {@link module:essentials/essentials~Essentials} plugin) as a keyboard shortcut. The installation instructions are for developers interested in building their own, custom rich text editor or willing to configure the toolbar button.
+	This feature is enabled by default in all {@link installation/getting-started/predefined-builds predefined builds} (loaded by the {@link module:essentials/essentials~Essentials} plugin) as a keyboard shortcut. The installation instructions are for developers interested in building their own, custom rich text editor or willing to configure the toolbar button.
 </info-box>
 
 To add this feature to your editor, install the [`@ckeditor/ckeditor5-select-all`](https://www.npmjs.com/package/@ckeditor/ckeditor5-select-all) package:
@@ -49,18 +41,22 @@ import SelectAll from '@ckeditor/ckeditor5-select-all/src/selectall';
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
 		// Load the plugin.
-		plugins: [ SelectAll, ... ],
+		plugins: [ SelectAll, /* ... */ ],
 
 		// Display the "Select all" button in the toolbar.
-		toolbar: [ 'selectAll', ... ],
+		toolbar: [ 'selectAll', /* ... */ ],
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box info>
-	Read more about {@link installation/getting-started/installing-plugins installing plugins} and {@link features/toolbar toolbar configuration}.
+	Read more about {@link installation/plugins/installing-plugins installing plugins} and {@link features/toolbar toolbar configuration}.
 </info-box>
+
+## Related features
+
+* {@link features/keyboard-support Keyboard shortcuts} &ndash; Check other popular keyboard shortcuts supported by CKEditor 5.
 
 ## Common API
 
@@ -74,9 +70,9 @@ editor.execute( 'selectAll' );
 ```
 
 <info-box>
-	We recommend using the official {@link framework/guides/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
 
 ## Contribute
 
-The source code of the feature is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-select-all.
+The source code of the feature is available on GitHub at [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-select-all](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-select-all).

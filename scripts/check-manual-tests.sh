@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+# @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
 # For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
 
 # `set -e` cannot be used because if the web crawler will fail, the HTTP server will not be closed.
@@ -29,7 +29,7 @@ fi
 echo "Starting the manual test server..."
 
 # `yarn run` does not forward SIGTERM to process, so we need to use the command directly.
-node --max_old_space_size=8192 node_modules/@ckeditor/ckeditor5-dev-tests/bin/test-manual.js $MANUAL_TEST_SERVER_OPTIONS &
+node --max_old_space_size=8192 node_modules/@ckeditor/ckeditor5-dev-tests/bin/testmanual.js $MANUAL_TEST_SERVER_OPTIONS &
 
 MANUAL_TEST_SERVER_PROCESS_ID=$!
 

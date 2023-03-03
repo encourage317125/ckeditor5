@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -11,7 +11,7 @@
 
 import CKEditorError from './ckeditorerror';
 
-const version = '35.2.1';
+const version = '36.0.1';
 
 export default version;
 
@@ -37,8 +37,10 @@ if ( windowOrGlobal.CKEDITOR_VERSION ) {
 	 *
 	 * If you import an existing CKEditor 5 build and a plugin like this:
 	 *
-	 *		import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-	 *		import Highlight from '@ckeditor/ckeditor5-highlight/src/highlight';
+	 * ```ts
+	 * import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+	 * import Highlight from '@ckeditor/ckeditor5-highlight/src/highlight';
+	 * ```
 	 *
 	 * Then your project loads some CKEditor 5 packages twice. How does it happen?
 	 *
@@ -54,44 +56,48 @@ if ( windowOrGlobal.CKEDITOR_VERSION ) {
 	 * Adding plugins to a build is done by taking the source version of this build (so, before it was built with webpack)
 	 * and adding plugins there. In this situation, webpack will know that it only needs to load each plugin once.
 	 *
-	 * Read more in the {@glink installation/getting-started/installing-plugins "Installing plugins"} guide.
+	 * Read more in the {@glink installation/plugins/installing-plugins Installing plugins} guide.
 	 *
 	 * # Confused an editor build with an editor implementation
 	 *
 	 * This scenario is very similar to the previous one, but has a different origin.
 	 *
 	 * Let's assume that you wanted to use CKEditor 5 from source, as explained in the
-	 * {@glink installation/advanced/alternative-setups/integrating-from-source "Building from source"} section
-	 * or in the {@glink framework/guides/quick-start "Quick start"} guide of CKEditor 5 Framework.
+	 * {@glink installation/advanced/alternative-setups/integrating-from-source-webpack "Building from source"} section
+	 * or in the {@glink framework/quick-start "Quick start"} guide of CKEditor 5 Framework.
 	 *
 	 * The correct way to do so is to import an editor and plugins and run them together like this:
 	 *
-	 *		import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
-	 *		import Essentials from '@ckeditor/ckeditor5-essentials/src/essentials';
-	 *		import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-	 *		import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
-	 *		import Italic from '@ckeditor/ckeditor5-basic-styles/src/italic';
+	 * ```ts
+	 * import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
+	 * import Essentials from '@ckeditor/ckeditor5-essentials/src/essentials';
+	 * import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
+	 * import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
+	 * import Italic from '@ckeditor/ckeditor5-basic-styles/src/italic';
 	 *
-	 *		ClassicEditor
-	 *			.create( document.querySelector( '#editor' ), {
-	 *				plugins: [ Essentials, Paragraph, Bold, Italic ],
-	 *				toolbar: [ 'bold', 'italic' ]
-	 *			} )
-	 *			.then( editor => {
-	 *				console.log( 'Editor was initialized', editor );
-	 *			} )
-	 *			.catch( error => {
-	 *				console.error( error.stack );
-	 *			} );
+	 * ClassicEditor
+	 * 	.create( document.querySelector( '#editor' ), {
+	 * 		plugins: [ Essentials, Paragraph, Bold, Italic ],
+	 * 		toolbar: [ 'bold', 'italic' ]
+	 * 	} )
+	 * 	.then( editor => {
+	 * 		console.log( 'Editor was initialized', editor );
+	 * 	} )
+	 * 	.catch( error => {
+	 * 		console.error( error.stack );
+	 * 	} );
+	 * ```
 	 *
 	 * However, you might have mistakenly imported a build instead of the source `ClassicEditor`. In this case
 	 * your imports will look like this:
 	 *
-	 *		import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-	 *		import Essentials from '@ckeditor/ckeditor5-essentials/src/essentials';
-	 *		import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-	 *		import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
-	 *		import Italic from '@ckeditor/ckeditor5-basic-styles/src/italic';
+	 * ```ts
+	 * import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+	 * import Essentials from '@ckeditor/ckeditor5-essentials/src/essentials';
+	 * import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
+	 * import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
+	 * import Italic from '@ckeditor/ckeditor5-basic-styles/src/italic';
+	 * ```
 	 *
 	 * This creates the same situation as in the previous section because you use a build together with source plugins.
 	 *
@@ -129,7 +135,7 @@ if ( windowOrGlobal.CKEDITOR_VERSION ) {
 	 * **Note:** All official CKEditor 5 packages (excluding integrations and `ckeditor5-dev-*` packages) are released in the
 	 * same major version. This is &mdash; in the `x.y.z`, the `x` is the same for all packages. This is the simplest way to check
 	 * whether you use packages coming from the same CKEditor 5 version. You can read more about versioning in the
-	 * {@glink support/versioning-policy Versioning policy} guide.
+	 * {@glink updating/versioning-policy Versioning policy} guide.
 	 *
 	 * # Packages were duplicated in `node_modules`
 	 *

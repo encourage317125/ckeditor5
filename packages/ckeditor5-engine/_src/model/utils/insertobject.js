@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -13,7 +13,7 @@ import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import { findOptimalInsertionRange } from './findoptimalinsertionrange';
 
 /**
- * Inserts an {@glink framework/guides/deep-dive/schema#object-elements object element} at a specific position in the editor content.
+ * Inserts an {@glink framework/deep-dive/schema#object-elements object element} at a specific position in the editor content.
  *
  * **Note:** Use {@link module:engine/model/model~Model#insertObject} instead of this function.
  * This function is only exposed to be reusable in algorithms which change the {@link module:engine/model/model~Model#insertObject}

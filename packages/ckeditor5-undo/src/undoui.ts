@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -7,16 +7,14 @@
  * @module undo/undoui
  */
 
-import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
-import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
+import { Plugin } from '@ckeditor/ckeditor5-core';
+import { ButtonView } from '@ckeditor/ckeditor5-ui';
 
 import undoIcon from '../theme/icons/undo.svg';
 import redoIcon from '../theme/icons/redo.svg';
 
 /**
  * The undo UI feature. It introduces the `'undo'` and `'redo'` buttons to the editor.
- *
- * @extends module:core/plugin~Plugin
  */
 export default class UndoUI extends Plugin {
 	/**
@@ -44,11 +42,10 @@ export default class UndoUI extends Plugin {
 	/**
 	 * Creates a button for the specified command.
 	 *
-	 * @private
-	 * @param {String} name Command name.
-	 * @param {String} label Button label.
-	 * @param {String} keystroke Command keystroke.
-	 * @param {String} Icon Source of the icon.
+	 * @param name Command name.
+	 * @param label Button label.
+	 * @param keystroke Command keystroke.
+	 * @param Icon Source of the icon.
 	 */
 	private _addButton( name: 'undo' | 'redo', label: string, keystroke: string, Icon: string ) {
 		const editor = this.editor;

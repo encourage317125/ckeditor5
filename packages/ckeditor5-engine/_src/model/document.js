@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -26,7 +26,7 @@ const graveyardName = '$graveyard';
  * Data model's document. It contains the model's structure, its selection and the history of changes.
  *
  * Read more about working with the model in
- * {@glink framework/guides/architecture/editing-engine#model introduction to the the editing engine's architecture}.
+ * {@glink framework/architecture/editing-engine#model introduction to the the editing engine's architecture}.
  *
  * Usually, the document contains just one {@link module:engine/model/document~Document#roots root element}, so
  * you can retrieve it by just calling {@link module:engine/model/document~Document#getRoot} without specifying its name:

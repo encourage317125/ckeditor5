@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -78,7 +78,7 @@ import mix from '@ckeditor/ckeditor5-utils/src/mix';
  *
  * You can read more about conversion in the following guide:
  *
- * * {@glink framework/guides/deep-dive/conversion/downcast Downcast conversion}
+ * * {@glink framework/deep-dive/conversion/downcast Downcast conversion}
  *
  * An example of a custom converter for the downcast dispatcher:
  *

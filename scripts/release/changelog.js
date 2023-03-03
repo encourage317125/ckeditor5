@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -11,7 +11,7 @@
 
 const path = require( 'path' );
 const fs = require( 'fs' );
-const devEnv = require( '@ckeditor/ckeditor5-dev-env' );
+const { generateChangelogForMonoRepository } = require( '@ckeditor/ckeditor5-dev-release-tools' );
 
 const CKEDITOR5_INTERNAL_PATH = path.resolve( __dirname, '..', '..', 'external', 'ckeditor5-internal' );
 const COLLABORATION_FEATURES_PATH = path.resolve( __dirname, '..', '..', 'external', 'collaboration-features' );
@@ -25,7 +25,7 @@ if ( !fs.existsSync( COLLABORATION_FEATURES_PATH ) ) {
 }
 
 Promise.resolve()
-	.then( () => devEnv.generateChangelogForMonoRepository( {
+	.then( () => generateChangelogForMonoRepository( {
 		cwd: process.cwd(),
 		packages: 'packages',
 		releaseBranch: 'release',
@@ -44,19 +44,22 @@ Promise.resolve()
 			}
 
 			return 'https://www.npmjs.com/package/@ckeditor/ckeditor5-' + name;
-		},
-		externalRepositories: [
-			{
-				cwd: CKEDITOR5_INTERNAL_PATH,
-				packages: 'packages',
-				skipLinks: true
-			},
-			{
-				cwd: COLLABORATION_FEATURES_PATH,
-				packages: 'packages',
-				skipLinks: true
-			}
-		]
+		}
+		// Temporary, as we publish only packages from the `ckeditor/ckeditor5` repository.
+		// externalRepositories: [
+		// 	{
+		// 		cwd: CKEDITOR5_INTERNAL_PATH,
+		// 		packages: 'packages',
+		// 		skipLinks: true,
+		// 		from: 'v36.0.1' // TODO: To be removed once a new major version is live.
+		// 	},
+		// 	{
+		// 		cwd: COLLABORATION_FEATURES_PATH,
+		// 		packages: 'packages',
+		// 		skipLinks: true,
+		// 		from: 'v36.0.1' // TODO: To be removed once a new major version is live.
+		// 	}
+		// ]
 	} ) )
 	.then( () => {
 		console.log( 'Done!' );

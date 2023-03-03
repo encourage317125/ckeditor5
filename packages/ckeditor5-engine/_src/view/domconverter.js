@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -1700,13 +1700,13 @@ function _logUnsafeElement( elementName ) {
 
 /**
  * The {@link module:engine/view/domconverter~DomConverter} detected an interactive attribute in the
- * {@glink framework/guides/architecture/editing-engine#editing-pipeline editing pipeline}. For the best
+ * {@glink framework/architecture/editing-engine#editing-pipeline editing pipeline}. For the best
  * editing experience, the attribute was renamed to `data-ck-unsafe-attribute-[original attribute name]`.
  *
  * If you are the author of the plugin that generated this attribute and you want it to be preserved
  * in the editing pipeline, you can configure this when creating the element
  * using {@link module:engine/view/downcastwriter~DowncastWriter} during the
- * {@glink framework/guides/architecture/editing-engine#conversion model–view conversion}. Methods such as
+ * {@glink framework/architecture/editing-engine#conversion model–view conversion}. Methods such as
  * {@link module:engine/view/downcastwriter~DowncastWriter#createContainerElement},
  * {@link module:engine/view/downcastwriter~DowncastWriter#createAttributeElement}, or
  * {@link module:engine/view/downcastwriter~DowncastWriter#createEmptyElement}

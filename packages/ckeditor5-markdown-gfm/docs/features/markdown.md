@@ -8,7 +8,7 @@ The Markdown plugin allows switching the default CKEditor 5 output from HTML to 
 Please remember that Markdown syntax is very simple and it does not cover all the rich-text features. Some features provided by CKEditor 5 will thus work as intended only when output to HTML as they have no Markdown equivalent.
 
 <info-box info>
-	You can learn more about the possible practical applications of Markdown editing with CKEditor 5 in [this dedicated blog post depicting the idea, solutions and a case study](https://ckeditor.com/blog/CKEditor-5-the-best-open-source-Markdown-editor/).
+	This feature is not available in any of the {@link installation/getting-started/predefined-builds predefined builds}. See the [installation](#installation) section to learn how to enable it in your editor.
 </info-box>
 
 
@@ -74,6 +74,7 @@ import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor'
 import Essentials from '@ckeditor/ckeditor5-essentials/src/essentials';
 import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
 import Italic from '@ckeditor/ckeditor5-basic-styles/src/italic';
+// More imports.
 // ...
 
 import Markdown from '@ckeditor/ckeditor5-markdown-gfm/src/markdown';
@@ -82,21 +83,22 @@ ClassicEditor
 	.create( document.querySelector( '#snippet-markdown' ), {
 		plugins: [
 			Markdown,
-
 			Essentials,
 			Bold,
 			Italic,
+			// More plugins.
 			// ...
 		],
+		// More of editor's config.
 		// ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 
 ```
 
 <info-box info>
-	Read more about {@link installation/getting-started/installing-plugins installing plugins}.
+	Read more about {@link installation/plugins/installing-plugins installing plugins}.
 </info-box>
 
 ## Known issues
@@ -110,8 +112,8 @@ ClassicEditor
 While the Markdown plugin is stable and ready to use, some issues are still being worked on. Feel free to upvote 👍&nbsp; these on GitHub if you would like to see this introduced.
 
 * Pasting Markdown-formatted content does not automatically convert the pasted syntax markers into properly formatted content. GitHub issues: [#2321](https://github.com/ckeditor/ckeditor5/issues/2321), [#2322](https://github.com/ckeditor/ckeditor5/issues/2322).
-* The Markdown code generated with the Markdown output feature will not properly render {@link features/table#nesting-tables nested tables}. GitHUb issue: [#9475](https://github.com/ckeditor/ckeditor5/issues/9475).
+* The Markdown code generated with the Markdown output feature will not properly render {@link features/tables#nesting-tables nested tables}. GitHUb issue: [#9475](https://github.com/ckeditor/ckeditor5/issues/9475).
 
 ## Contribute
 
-The source code of this feature is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-markdown-gfm.
+The source code of this feature is available on GitHub in [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-markdown-gfm](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-markdown-gfm).

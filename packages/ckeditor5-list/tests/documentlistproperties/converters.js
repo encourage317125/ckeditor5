@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -140,7 +140,7 @@ describe( 'DocumentListPropertiesEditing - converters', () => {
 						# OL 2 {id:003}
 						  * UL 1 {id:001} {style:circle}
 						  * UL 2 {id:002}
-						# OL 3 {id:004} 
+						# OL 3 {id:004}
 					` )
 				);
 			} );
@@ -1562,6 +1562,39 @@ describe( 'DocumentListPropertiesEditing - converters', () => {
 				);
 			} );
 
+			it( 'should convert single list (type: numbered, start: 0)', () => {
+				test.data(
+					'<ol start="0">' +
+						'<li>Foo</li>' +
+						'<li>Bar</li>' +
+					'</ol>',
+
+					modelList( `
+						# Foo {start:0}
+						# Bar
+					` )
+				);
+			} );
+
+			it( 'should change negative start index to 1 when converting single list (type: numbered, start: -3)', () => {
+				test.data(
+					'<ol start="-3">' +
+						'<li>Foo</li>' +
+						'<li>Bar</li>' +
+					'</ol>',
+
+					modelList( `
+						# Foo {start:1}
+						# Bar
+					` ),
+
+					'<ol>' +
+						'<li>Foo</li>' +
+						'<li>Bar</li>' +
+					'</ol>'
+				);
+			} );
+
 			it( 'should convert when the list is in the middle of the content', () => {
 				test.data(
 					'<p>Paragraph.</p>' +
@@ -2165,7 +2198,7 @@ describe( 'DocumentListPropertiesEditing - converters', () => {
 					'</ol>',
 
 					modelList( `
-						# Foo {style:default} {start:1} {reversed:false} 
+						# Foo {style:default} {start:1} {reversed:false}
 						# Bar
 					` )
 				);

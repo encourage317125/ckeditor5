@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -7,8 +7,10 @@
  * @module utils/uid
  */
 
-// A hash table of hex numbers to avoid using toString() in uid() which is costly.
-// [ '00', '01', '02', ..., 'fe', 'ff' ]
+/**
+ * A hash table of hex numbers to avoid using toString() in uid() which is costly.
+ * [ '00', '01', '02', ..., 'fe', 'ff' ]
+ */
 const HEX_NUMBERS = new Array( 256 ).fill( '' )
 	.map( ( _, index ) => ( '0' + ( index ).toString( 16 ) ).slice( -2 ) );
 
@@ -20,7 +22,7 @@ const HEX_NUMBERS = new Array( 256 ).fill( '' )
  * (from "0" to "9", from "a" to "f"). In other words, each id corresponds to an "e" followed
  * by 16 8-bit numbers next to each other.
  *
- * @returns {String} An unique id string.
+ * @returns An unique id string.
  */
 export default function uid(): string {
 	// Let's create some positive random 32bit integers first.

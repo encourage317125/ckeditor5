@@ -5,13 +5,7 @@ category: features
 
 {@snippet features/build-link-source}
 
-The link feature brings support for link editing to the rich-text editor. It allows for inserting hyperlinks into the edited content and offers the UI to create and edit them.
-
-Thanks to the [autolink](#autolink-feature) plugin, typed or pasted URLs and e-mail addresses will be automatically turned into working links as you type.
-
-<info-box info>
-	This feature is enabled by default in all {@link installation/getting-started/predefined-builds predefined builds}.
-</info-box>
+The link feature lets you insert hyperlinks into your content and provides a UI to create and edit them. Thanks to the [autolink](#autolink-feature) plugin, typed or pasted URLs and e-mail addresses automatically turn into working links.
 
 ## Demo
 
@@ -25,7 +19,7 @@ Use the Link toolbar button {@icon @ckeditor/ckeditor5-link/theme/icons/link.svg
 
 ## Typing around links
 
-CKEditor 5 allows for typing both at inner and outer boundaries of links to make the editing easier for the users.
+CKEditor 5 allows for typing both at the inner and outer boundaries of links to make editing easier for the users.
 
 **To type inside a link**, move the caret to its (start or end) boundary. As long as the link remains highlighted (by default: blue), typing and applying formatting will be done within its boundaries:
 
@@ -37,11 +31,11 @@ CKEditor 5 allows for typing both at inner and outer boundaries of links to make
 
 ## Custom link attributes (decorators)
 
-By default, all links created in the editor have the `href="..."` attribute in the {@link installation/getting-started/basic-api#getting-the-editor-data-with-getdata editor data}. If you want your links to have additional link attributes, {@link module:link/link~LinkConfig#decorators link decorators} provide an easy way to configure and manage them.
+By default, all links created in the editor have the `href="..."` attribute in the {@link installation/getting-started/getting-and-setting-data#getting-the-editor-data-with-getdata editor data}. If you want your links to have additional link attributes, {@link module:link/link~LinkConfig#decorators link decorators} provide an easy way to configure and manage them.
 
 There are two types of link decorators you can use:
 
-* [**Automatic**](#adding-attributes-to-links-based-on-predefined-rules-automatic-decorators) &ndash; They match links against pre–defined rules and manage their attributes based on the results.
+* [**Automatic**](#adding-attributes-to-links-based-on-predefined-rules-automatic-decorators) &ndash; They match links against pre-defined rules and manage their attributes based on the results.
 * [**Manual**](#adding-attributes-to-links-using-the-ui-manual-decorators) &ndash; They allow users to control link attributes individually using the editor UI.
 
 <info-box>
@@ -61,8 +55,9 @@ ClassicEditor
 	.create( document.querySelector( '#editor' ), {
 		toolbar: {
 			items: [
+				'link',
+				// More toolbar items. 
 				// ...
-				'link'
 			],
 		},
 		link: {
@@ -81,15 +76,15 @@ ClassicEditor
 			]
 		}
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 ### Configuration
 
 Decorators are configured through definitions provided in the {@link module:link/link~LinkConfig#decorators `config.link.decorators`} configuration option.
 
-Each decorator definition must have its own unique name. In case of [manual decorators](#adding-attributes-to-links-using-the-ui-manual-decorators), that name also represents the decorator in the {@link framework/guides/architecture/editing-engine#text-attributes document model}.
+Each decorator definition must have a unique name. In the case of [manual decorators](#adding-attributes-to-links-using-the-ui-manual-decorators), that name also represents the decorator in the {@link framework/architecture/editing-engine#text-attributes document model}.
 
 <info-box warning>
 	Link decorators work independently of one another and no conflict resolution mechanism exists. For example, configuring the `target` attribute using both an automatic and a manual decorator at the same time could end up with quirky results. The same applies if multiple manual or automatic decorators were defined for the same attribute.
@@ -102,13 +97,14 @@ A very common use case for (automatic) link decorators is adding `target="_blank
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		// ...
 		link: {
 			addTargetToExternalLinks: true
 		}
+		// More of editor's config.
+ 		// ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 Internally, this configuration corresponds to an [automatic decorator](#adding-attributes-to-links-based-on-predefined-rules-automatic-decorators) with the following {@link module:link/link~LinkDecoratorAutomaticDefinition definition}:
@@ -116,7 +112,6 @@ Internally, this configuration corresponds to an [automatic decorator](#adding-a
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		// ...
 		link: {
 			decorators: {
 				addTargetToExternalLinks: {
@@ -129,9 +124,11 @@ ClassicEditor
 				}
 			}
 		}
+		// More of editor's config.
+ 		// ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 If you want to leave the decision whether a link should open in a new tab to the users, do not use the `config.link.addTargetToExternalLinks` configuration but define a new [manual decorator](#adding-attributes-to-links-using-the-ui-manual-decorators) with the following definition instead:
@@ -139,7 +136,6 @@ If you want to leave the decision whether a link should open in a new tab to the
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		// ...
 		link: {
 			decorators: {
 				openInNewTab: {
@@ -152,9 +148,11 @@ ClassicEditor
 				}
 			}
 		}
+		// More of editor's config.
+ 		// ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 #### Adding default link protocol to external links
@@ -168,13 +166,14 @@ See a basic configuration example:
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		// ...
 		link: {
 			defaultProtocol: 'http://'
 		}
+		// More of editor's config.
+ 		// ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box>
@@ -183,16 +182,15 @@ ClassicEditor
 	When enabled, this feature also provides the **email address auto-detection** feature. When you submit `hello@example.com` in your content, the plugin will automatically change it to `mailto:hello@example.com`.
 </info-box>
 
-#### Adding attributes to links based on pre–defined rules (automatic decorators)
+#### Adding attributes to links based on pre-defined rules (automatic decorators)
 
-Automatic link decorators match all links in the editor content against a {@link module:link/link~LinkDecoratorAutomaticDefinition function} which decides whether the link should receive some set of attributes, considering the URL (`href`) of the link. These decorators work silently and are being applied during the {@link framework/guides/architecture/editing-engine#conversion data downcast} only.
+Automatic link decorators match all links in the editor content against a {@link module:link/link~LinkDecoratorAutomaticDefinition function} which decides whether the link should receive some set of attributes, considering the URL (`href`) of the link. These decorators work silently and are being applied during the {@link framework/architecture/editing-engine#conversion data downcast} only.
 
 For instance, to create an automatic decorator that adds the `download="file.pdf"` attribute to all links ending with the `".pdf"` extension, you should add the following {@link module:link/link~LinkDecoratorAutomaticDefinition definition} to {@link module:link/link~LinkConfig#decorators `config.link.decorators`}:
 
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		// ...
 		link: {
 			decorators: {
 				detectDownloadable: {
@@ -204,9 +202,11 @@ ClassicEditor
 				}
 			}
 		}
+		// More of editor's config.
+ 		// ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box>
@@ -215,14 +215,13 @@ ClassicEditor
 
 #### Adding attributes to links using the UI (manual decorators)
 
-Manual link decorators are represented in the link editing balloon as switch buttons that the users can use to control the presence of attributes of a particular link (check out the [demo](#demo) to learn more). Each manual decorator {@link module:link/link~LinkDecoratorManualDefinition definition} contains a human–readable label displayed next to the switch button in the link editing balloon. Make sure it is compact and precise for the convenience of the users.
+Manual link decorators are represented in the link editing balloon as switch buttons that the users can use to control the presence of attributes of a particular link (check out the [demo](#demo) to learn more). Each manual decorator {@link module:link/link~LinkDecoratorManualDefinition definition} contains a human-readable label displayed next to the switch button in the link editing balloon. Make sure it is compact and precise for the convenience of the users.
 
 To configure a "Downloadable" switch button in the link editing balloon that adds the `download="file"` attribute to the link when turned on, add the following definition to {@link module:link/link~LinkConfig#decorators `config.link.decorators`}:
 
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		// ...
 		link: {
 			decorators: {
 				toggleDownloadable: {
@@ -243,16 +242,18 @@ ClassicEditor
 				}
 			}
 		}
+		// More of editor's config.
+ 		// ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 ## Autolink feature
 
 Automatic linking of URLs typed or pasted into the editor is enabled by default in the predefined builds. The {@link module:link/autolink~AutoLink `AutoLink`} feature will automatically turn URLs or e-mail addresses into real, working links.
 
-To use the autolink function simply press <kbd>Space</kbd>, <kbd>Enter</kbd> or <kbd>Shift</kbd>+<kbd>Enter</kbd> after a link.
+To use the autolink function, simply press <kbd>Space</kbd>, <kbd>Enter</kbd> or <kbd>Shift</kbd>+<kbd>Enter</kbd> after a link.
 
 <info-box>
 	Autolink action can always be reverted by the undo feature (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>Z</kbd>).
@@ -263,7 +264,7 @@ To use the autolink function simply press <kbd>Space</kbd>, <kbd>Enter</kbd> or 
 ## Installation
 
 <info-box info>
-	Both the base link feature and autolink feature are enabled by default in all builds. The installation instructions are for developers interested in building their own, custom rich text editor.
+	Both the base link feature and autolink feature are enabled by default in all {@link installation/getting-started/predefined-builds predefined builds}. The installation instructions are for developers interested in building their own, custom rich text editor.
 </info-box>
 
 To add this feature to your editor, install the [`@ckeditor/ckeditor5-link`](https://www.npmjs.com/package/@ckeditor/ckeditor5-link) package:
@@ -280,15 +281,15 @@ import AutoLink from '@ckeditor/ckeditor5-link/src/autolink';
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ Link, AutoLink, ... ],
-		toolbar: [ 'link', ... ],
+		plugins: [ Link, AutoLink, /* ... */ ],
+		toolbar: [ 'link', /* ... */ ],
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box info>
-	Read more about {@link installation/getting-started/installing-plugins installing plugins}.
+	Read more about {@link installation/plugins/installing-plugins installing plugins}.
 </info-box>
 
 ## Common API
@@ -317,9 +318,9 @@ The package provides a plugin for {@link module:link/linkimage~LinkImage linking
 Links are represented in the {@link module:engine/model/model~Model model} using the `linkHref` attribute. [Manual link decorators](#adding-attributes-to-links-using-the-ui-manual-decorators) are represented in the model using text attributes corresponding to their names, as configured in {@link module:link/link~LinkConfig#decorators `config.link.decorators`}.
 
 <info-box>
-	We recommend using the official {@link framework/guides/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
 
 ## Contribute
 
-The source code of the feature is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-link.
+The source code of the feature is available on GitHub at [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-link](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-link).

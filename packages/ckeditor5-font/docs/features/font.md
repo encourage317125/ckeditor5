@@ -1,27 +1,11 @@
 ---
-title: Font
+title: Font family, size, and color
 category: features
 ---
 
 {@snippet features/build-font-source}
 
-The font feature provides extended text formatting options for the document content.
-
-The font styles, just like the {@link features/basic-styles basic text styles} can serve numerous purposes. Font size setting can be applied globally or to a selected part of the text only making it catch the eye of the reader. Using different font families can help differentiate between sections of the content that serve various purposes (e.g. main text and a side quotation or a recap). Different font colors can work as markers and guides just like font background colors, that stand out even more and draw attention.
-
-The plugin enables the following features in the rich-text editor:
-* {@link module:font/fontfamily~FontFamily} &ndash; Allows to change the font family by applying inline `<span>` elements with a `font-family` in the `style` attribute.
-* {@link module:font/fontsize~FontSize} &ndash; Allows to control the font size by applying inline `<span>` elements that either have a CSS class or a `font-size` in the `style` attribute.
-* {@link module:font/fontcolor~FontColor} &ndash; Allows to control the font color by applying inline `<span>` elements with a `color` in the `style` attribute.
-* {@link module:font/fontbackgroundcolor~FontBackgroundColor} &ndash; Allows to control the font background color by applying inline `<span>` elements with a `background-color` in the `style` attribute.
-
-<info-box info>
-	All font formatting can be removed with the {@link features/remove-format remove format} feature.
-</info-box>
-
-<info-box info>
-	The font styles feature is enabled by default in the {@link installation/getting-started/predefined-builds#document-editor document editor build} and {@link installation/getting-started/predefined-builds#superbuild superbuild} only. See the [installation](#installation) section to learn how to enable it in your editor.
-</info-box>
+The font feature lets you change font family, size, and color (including background color).
 
 ## Demo
 
@@ -33,15 +17,19 @@ Use the toolbar dropdowns in the demo below to control font size {@icon @ckedito
 	This demo only presents a limited set of features. Visit the {@link examples/builds/full-featured-editor full-featured editor example} to see more in action.
 </info-box>
 
-## Related features
+## Additional feature information
 
-Here are some more CKEditor 5 features that can help you format your content:
-* {@link features/basic-styles Basic text styles} &ndash; The essentials, like **bold**, *italic* and others.
-* {@link features/style Styles} &ndash; Apply pre-configured styles to existing elements in the editor content.
-* {@link features/text-alignment Text alignment} &ndash; Because it does matter whether the content is left, right, centered or justified.
-* {@link features/headings Headings} &ndash; Divide your content into sections.
-* {@link features/highlight Highlight} &ndash; Mark important words and passages, aiding a review or drawing attention to specific parts of content.
-* {@link features/remove-format Remove format} &ndash; Easily clean basic text formatting.
+The font styles, just like the {@link features/basic-styles basic text styles} can serve numerous purposes. Font size setting can be applied globally or to a selected part of the text only making it catch the eye of the reader. Using different font families can help differentiate between sections of the content that serve various purposes (e.g. main text and a side quotation or a recap). Different font colors can work as markers and guides just like font background colors, that stand out even more and draw attention.
+
+The plugin enables the following features in the rich-text editor:
+* {@link module:font/fontfamily~FontFamily} &ndash; Allows to change the font family by applying inline `<span>` elements with a `font-family` in the `style` attribute.
+* {@link module:font/fontsize~FontSize} &ndash; Lets you control the font size by applying inline `<span>` elements that either have a CSS class or a `font-size` in the `style` attribute.
+* {@link module:font/fontcolor~FontColor} &ndash; Allows to control the font color by applying inline `<span>` elements with a `color` in the `style` attribute.
+* {@link module:font/fontbackgroundcolor~FontBackgroundColor} &ndash; Lets you control the font background color by applying inline `<span>` elements with a `background-color` in the `style` attribute.
+
+<info-box info>
+	All font formatting can be removed with the {@link features/remove-format remove format} feature.
+</info-box>
 
 ## Configuring the font family feature
 
@@ -65,8 +53,8 @@ ClassicEditor
 			'heading', 'bulletedList', 'numberedList', 'fontFamily', 'undo', 'redo'
 		]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 {@snippet features/custom-font-family-options}
@@ -80,14 +68,16 @@ ClassicEditor
 	.create( document.querySelector( '#editor' ), {
 		fontFamily: {
 			options: [
+				// Font family configuration options are described in the "Configuring the font family feature" section.
 				// ...
 			],
 			supportAllValues: true
 		},
+		// More of editor's config.
         // ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 ## Configuring the font size feature
@@ -151,8 +141,8 @@ ClassicEditor
 			'heading', 'bulletedList', 'numberedList', 'fontSize', 'undo', 'redo'
 		]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 {@snippet features/custom-font-size-named-options}
@@ -187,8 +177,8 @@ ClassicEditor
 			'heading', 'bulletedList', 'numberedList', 'fontSize', 'undo', 'redo'
 		]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 {@snippet features/custom-font-size-numeric-options}
@@ -203,13 +193,15 @@ ClassicEditor
 		fontSize: {
 			options: [
 				// Numerical values.
+				// ...
 			],
 			supportAllValues: true
 		},
+		// More of editor's config.
         // ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box info>
@@ -258,7 +250,7 @@ ClassicEditor
 					label: 'White',
 					hasBorder: true
 				},
-
+				// More colors.
 				// ...
 			]
 		},
@@ -284,7 +276,7 @@ ClassicEditor
 					color: 'hsl(120, 75%, 60%)',
 					label: 'Green'
 				},
-
+				// More colors.
 				// ...
 			]
 		},
@@ -292,8 +284,8 @@ ClassicEditor
 			'heading', 'bulletedList', 'numberedList', 'fontColor', 'fontBackgroundColor', 'undo', 'redo'
 		]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 ### Changing the geometry of the color grid
@@ -307,24 +299,26 @@ ClassicEditor
 	.create( document.querySelector( '#editor' ), {
 		fontColor: {
 			colors: [
-				// 9 colors defined here...
+				// 9 colors defined here.
+				// ...
 			]
 
 			columns: 3, // so, you can display them in 3 columns.
 
+			// Optional configuration of the number of document colors.
 			// ...
 		},
 		fontBackgroundColor: {
 			columns: 6,
-
+			// Background color options.
 			// ...
 		},
 		toolbar: [
 			'heading', 'bulletedList', 'numberedList', 'fontColor', 'fontBackgroundColor', 'undo', 'redo'
 		]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 ### Documents colors
@@ -343,23 +337,29 @@ ClassicEditor
 			// And 12 document colors (2 rows of them).
 			documentColors: 12,
 
+			// Optional available font colors configuration.
 			// ...
 		},
 		fontBackgroundColor: {
 			// Remove the "Document colors" section.
 			documentColors: 0,
 
+			// Background color options.
 			// ...
 		},
 		toolbar: [
 			'heading', 'bulletedList', 'numberedList', 'fontColor', 'fontBackgroundColor', 'undo', 'redo'
 		]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 ## Installation
+
+<info-box info>
+	The font styles feature is enabled by default in the {@link installation/getting-started/predefined-builds#document-editor document editor build} and {@link installation/getting-started/predefined-builds#superbuild superbuild} only.
+</info-box>
 
 To add this feature to your rich-text editor, install the [`@ckeditor/ckeditor5-font`](https://www.npmjs.com/package/@ckeditor/ckeditor5-font) package:
 
@@ -374,11 +374,11 @@ import Font from '@ckeditor/ckeditor5-font/src/font';
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ Font, ... ],
-		toolbar: [ 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', ... ]
+		plugins: [ Font, /* ... */ ],
+		toolbar: [ 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', /* ... */ ]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 You can also add just one or a selected few of the font features to your plugin list and the toolbar configuration:
@@ -388,16 +388,26 @@ import FontFamily from '@ckeditor/ckeditor5-font/src/fontfamily';
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ FontFamily, ... ],
-		toolbar: [ 'fontFamily', ... ]
+		plugins: [ FontFamily, /* ... */ ],
+		toolbar: [ 'fontFamily', /* ... */ ]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box info>
-	Read more about {@link installation/getting-started/installing-plugins installing plugins}.
+	Read more about {@link installation/plugins/installing-plugins installing plugins}.
 </info-box>
+
+## Related features
+
+Here are some more CKEditor 5 features that can help you format your content:
+* {@link features/basic-styles Basic text styles} &ndash; The essentials, like **bold**, *italic*, and others.
+* {@link features/style Styles} &ndash; Apply pre-configured styles to existing elements in the editor content.
+* {@link features/text-alignment Text alignment} &ndash; Because it does matter whether the content is left, right, centered, or justified.
+* {@link features/headings Headings} &ndash; Divide your content into sections.
+* {@link features/highlight Highlight} &ndash; Mark important words and passages, aiding a review or drawing attention to specific parts of the content.
+* {@link features/remove-format Remove format} &ndash; Easily clean basic text formatting.
 
 ## Common API
 
@@ -505,7 +515,7 @@ The {@link module:font/fontbackgroundcolor~FontBackgroundColor} plugin registers
 	```
 
 <info-box>
-	We recommend using the official {@link framework/guides/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
 
 ## Content compatibility
@@ -516,7 +526,6 @@ While `<font color>` is always supported, to use `<font face>` and `<font size>`
 
 Text formatted with `<font>` is accepted by the plugin, but the editor always returns the markup in a modern format, so the transformation is one way only.
 
-
 ## Contribute
 
-The source code of the feature is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-font.
+The source code of the feature is available on GitHub at [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-font](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-font).

@@ -5,30 +5,17 @@ category: features
 
 {@snippet features/build-text-alignment-source}
 
-The alignment feature enables support for text alignment. You can use it to align your content to left, right and center or to justify it.
-
-<info-box info>
-	The alignment feature is enabled by default in the {@link installation/getting-started/predefined-builds#document-editor document editor build} and {@link installation/getting-started/predefined-builds#superbuild superbuild} only. See the [installation](#installation) section to learn how to enable it in your editor.
-</info-box>
+The alignment feature lets you align your content to the left or right as well as center or justify it.
 
 ## Demo
 
-Click inside a paragraph or a header and use the toolbar dropdown {@icon @ckeditor/ckeditor5-core/theme/icons/align-right.svg Text alignment} to apply desired alignment to a paragraph.
+Click inside a paragraph or a header and use the toolbar dropdown {@icon @ckeditor/ckeditor5-core/theme/icons/align-right.svg Text alignment} to change the alignment of a paragraph.
 
 {@snippet features/text-alignment}
 
 <info-box info>
 	This demo only presents a limited set of features. Visit the {@link examples/builds/full-featured-editor full-featured editor example} to see more in action.
 </info-box>
-
-## Related features
-
-There are more CKEditor 5 features that can help you organize your content:
-* {@link features/title Document title} &ndash; Clearly divide your content into a title and body.
-* {@link features/headings Headings} &ndash; Split your content into logical sections.
-* {@link features/indent Block indentation} &ndash; Organize your content into visually separated blocks, indent crucial paragraphs, etc.
-* {@link features/block-quote Block quote} &ndash; Include block quotations or pull quotes in the rich-text content.
-* {@link features/remove-format Remove format} &ndash; Easily clean basic text formatting.
 
 ## Configuring alignment options
 
@@ -52,8 +39,8 @@ ClassicEditor
 			'heading', '|', 'bulletedList', 'numberedList', 'alignment', 'undo', 'redo'
 		]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 {@snippet features/custom-text-alignment-options}
@@ -81,8 +68,8 @@ ClassicEditor
 			'heading', '|', 'bulletedList', 'numberedList', 'alignment', 'undo', 'redo'
 		]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 ## Configuring the toolbar
@@ -96,13 +83,17 @@ ClassicEditor
 			'heading', '|', 'alignment:left', 'alignment:right', 'alignment:center', 'alignment:justify'
 		]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 {@snippet features/custom-text-alignment-toolbar}
 
 ## Installation
+
+<info-box info>
+	The alignment feature is enabled by default in the {@link installation/getting-started/predefined-builds#document-editor document editor build} and {@link installation/getting-started/predefined-builds#superbuild superbuild} only.
+</info-box>
 
 To add this feature to your editor, install the [`@ckeditor/ckeditor5-alignment`](https://www.npmjs.com/package/@ckeditor/ckeditor5-alignment) package:
 
@@ -117,16 +108,25 @@ import Alignment from '@ckeditor/ckeditor5-alignment/src/alignment';
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ Alignment, ... ],
-		toolbar: [ 'alignment', ... ]
+		plugins: [ Alignment, /* ... */ ],
+		toolbar: [ 'alignment', /* ... */ ]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box info>
-	Read more about {@link installation/getting-started/installing-plugins installing plugins}.
+	Read more about {@link installation/plugins/installing-plugins installing plugins}.
 </info-box>
+
+## Related features
+
+CKEditor 5 has more features that can help you organize your content:
+* {@link features/title Document title} &ndash; Clearly divide your content into a title and body.
+* {@link features/headings Headings} &ndash; Split your content into logical sections.
+* {@link features/indent Block indentation} &ndash; Organize your content into visually separated blocks, indent crucial paragraphs, etc.
+* {@link features/block-quote Block quote} &ndash; Include block quotations or pull quotes in the rich-text content.
+* {@link features/remove-format Remove format} &ndash; Easily clean basic text formatting.
 
 ## Common API
 
@@ -146,7 +146,7 @@ The {@link module:alignment/alignment~Alignment} plugin registers:
 	```
 
 <info-box>
-	We recommend using the official {@link framework/guides/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
 
 ## Content compatibility
@@ -157,4 +157,4 @@ Block elements such as `<p>` with the `align` attribute are accepted by the plug
 
 ## Contribute
 
-The source code of the feature is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-alignment.
+The source code of the feature is available on GitHub at [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-alignment](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-alignment).

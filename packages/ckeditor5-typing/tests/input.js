@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -44,22 +44,24 @@ describe( 'Input', () => {
 		} );
 
 		describe( 'init()', () => {
-			it( 'should register the input command (deprecated)', async () => {
-				const editor = await ClassicTestEditor.create( domElement, {
-					plugins: [ Input ]
-				} );
-
-				expect( editor.commands.get( 'input' ) ).to.be.instanceOf( InsertTextCommand );
-
-				await editor.destroy();
-			} );
-
 			it( 'should register the insert text command', async () => {
 				const editor = await ClassicTestEditor.create( domElement, {
 					plugins: [ Input ]
 				} );
 
 				expect( editor.commands.get( 'insertText' ) ).to.be.instanceOf( InsertTextCommand );
+
+				await editor.destroy();
+			} );
+
+			it( 'should register the input command (deprecated) with the same command instance', async () => {
+				const editor = await ClassicTestEditor.create( domElement, {
+					plugins: [ Input ]
+				} );
+
+				const insertTextCommand = editor.commands.get( 'insertText' );
+
+				expect( editor.commands.get( 'input' ) ).to.equal( insertTextCommand );
 
 				await editor.destroy();
 			} );
@@ -172,6 +174,19 @@ describe( 'Input', () => {
 				const root = editor.model.document.getRoot();
 
 				editor.model.change( writer => writer.setSelection( root.getChild( 0 ), 'end' ) );
+
+				viewDocument.fire( 'compositionstart' );
+
+				sinon.assert.notCalled( spy );
+			} );
+
+			it( 'should not call model.deleteContent() on composition start if insertText command is disabled', () => {
+				const spy = sinon.spy( editor.model, 'deleteContent' );
+				const root = editor.model.document.getRoot();
+
+				editor.commands.get( 'insertText' ).forceDisabled( 'commentsOnly' );
+
+				editor.model.change( writer => writer.setSelection( root.getChild( 0 ), 'in' ) );
 
 				viewDocument.fire( 'compositionstart' );
 
@@ -379,6 +394,24 @@ describe( 'Input', () => {
 
 			editor.model.change( writer => writer.setSelection( root.getChild( 0 ), 'in' ) );
 
+			viewDocument.fire( 'keydown', {
+				keyCode: 229,
+				preventDefault: sinon.spy(),
+				stopPropagation: sinon.spy()
+			} );
+
+			sinon.assert.notCalled( spy );
+		} );
+
+		it( 'should not call model.deleteContent() on 229 keydown if insertText command is disabled', () => {
+			const spy = sinon.spy( editor.model, 'deleteContent' );
+			const root = editor.model.document.getRoot();
+
+			editor.model.change( writer => writer.setSelection( root.getChild( 0 ), 'in' ) );
+
+			editor.commands.get( 'insertText' ).forceDisabled( 'commentsOnly' );
+
+			viewDocument.isComposing = true;
 			viewDocument.fire( 'keydown', {
 				keyCode: 229,
 				preventDefault: sinon.spy(),

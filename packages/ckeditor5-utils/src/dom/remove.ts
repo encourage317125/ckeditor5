@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -10,7 +10,7 @@
 /**
  * Removes given node from parent.
  *
- * @param {Node} node Node to remove.
+ * @param node Node to remove.
  */
 export default function remove( node: Node ): void {
 	const parent = node.parentNode;

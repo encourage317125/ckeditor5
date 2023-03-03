@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -11,6 +11,13 @@
 
 const fs = require( 'fs' );
 const path = require( 'path' );
+const minimist = require( 'minimist' );
+
+const argv = minimist( process.argv.slice( 2 ), {
+	string: [
+		'npm-tag'
+	]
+} );
 
 // This scripts publish changes.
 //
@@ -24,11 +31,12 @@ const path = require( 'path' );
 // Use:
 // npm run release:publish -- --dry-run
 
-require( '@ckeditor/ckeditor5-dev-env' )
+require( '@ckeditor/ckeditor5-dev-release-tools' )
 	.releaseSubRepositories( {
 		cwd: process.cwd(),
 		packages: 'packages',
 		releaseBranch: 'release',
+		npmTag: argv[ 'npm-tag' ],
 		customReleases: [
 			'ckeditor5'
 		],
@@ -45,11 +53,10 @@ require( '@ckeditor/ckeditor5-dev-env' )
 				// automated/manual tests, translations, documentation, content styles.
 				// If you need to release anything from the directory, type a full path to the file/directory.
 				'src/*.js',
+				'src/*.d.ts',
 				'build/ckeditor5-dll.js',
 				'build/ckeditor5-dll.manifest.json',
-				'build/translations/*.js',
-				'tsconfig.json',
-				'typings/*.d.ts'
+				'build/translations/*.js'
 			]
 		},
 		optionalFilesAndDirectories: {

@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -7,25 +7,30 @@
  * @module core
  */
 
-export { default as Plugin } from './plugin';
-export { default as Command } from './command';
+export { default as Plugin, type PluginDependencies, type PluginConstructor } from './plugin';
+export { default as Command, type CommandExecuteEvent } from './command';
 export { default as MultiCommand } from './multicommand';
-export { CommandsMap } from './commandcollection';
-export { PluginsMap } from './plugincollection';
+export type { CommandsMap } from './commandcollection';
+export type { PluginsMap, default as PluginCollection } from './plugincollection';
 
-export { default as Context } from './context';
-export { default as ContextPlugin } from './contextplugin';
+export { default as Context, type ContextConfig } from './context';
+export { default as ContextPlugin, type ContextPluginDependencies } from './contextplugin';
+export { type EditingKeystrokeCallback } from './editingkeystrokehandler';
 
-export { default as Editor } from './editor/editor';
-export { default as EditorUI } from './editor/editorui';
-export { EditorConfig } from './editor/editorconfig';
+export { default as Editor, type EditorReadyEvent, type EditorDestroyEvent } from './editor/editor';
+export type {
+	EditorConfig,
+	LanguageConfig,
+	ToolbarConfig,
+	ToolbarConfigItem
+} from './editor/editorconfig';
 
 export { default as attachToForm } from './editor/utils/attachtoform';
-export { default as DataApiMixin } from './editor/utils/dataapimixin';
-export { default as ElementApiMixin } from './editor/utils/elementapimixin';
+export { default as DataApiMixin, type DataApi } from './editor/utils/dataapimixin';
+export { default as ElementApiMixin, type ElementApi } from './editor/utils/elementapimixin';
 export { default as secureSourceElement } from './editor/utils/securesourceelement';
 
-export { default as PendingActions } from './pendingactions';
+export { default as PendingActions, type PendingAction } from './pendingactions';
 
 import cancel from './../theme/icons/cancel.svg';
 import caption from './../theme/icons/caption.svg';

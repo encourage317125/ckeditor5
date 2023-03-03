@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -14,10 +14,6 @@
  * If it's a normal iterator, then it consumes **all items up to the given index**.
  * Refer to the [Iterators and Generators](https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Iterators_and_Generators)
  * guide to learn differences between these interfaces.
- *
- * @param {Number} index
- * @param {Iterable.<*>} iterable
- * @returns {*}
  */
 export default function nth<T>( index: number, iterable: Iterable<T> ): T | null {
 	for ( const item of iterable ) {

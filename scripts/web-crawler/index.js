@@ -1,20 +1,18 @@
 #!/usr/bin/env node
 
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
 /* eslint-env node */
 
 const minimist = require( 'minimist' );
-const { verify } = require( '@ckeditor/ckeditor5-dev-docs' );
-const { DEFAULT_CONCURRENCY } = require( '@ckeditor/ckeditor5-dev-docs/lib/web-crawler/constants' );
-const { toArray, isUrlValid } = require( '@ckeditor/ckeditor5-dev-docs/lib/web-crawler/utils' );
+const { DEFAULT_CONCURRENCY, runCrawler, toArray, isUrlValid } = require( '@ckeditor/ckeditor5-dev-web-crawler' );
 
 const options = parseArguments( process.argv.slice( 2 ) );
 
-verify( options );
+runCrawler( options );
 
 /**
  * Parses CLI arguments and prepares configuration for the crawler.

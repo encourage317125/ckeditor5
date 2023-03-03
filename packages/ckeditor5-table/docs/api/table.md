@@ -10,11 +10,11 @@ This package implements the table feature for CKEditor 5.
 
 ## Demo
 
-Check out the {@link features/table#demos demos in the table feature guide}.
+Check out the {@link features/tables#demo demos in the table feature guide}.
 
 ## Documentation
 
-See the {@link features/table table feature guide} and the documentation for the following plugins:
+See the {@link features/tables table feature guide} and the documentation for the following plugins:
 
 * {@link module:table/table~Table}
 * {@link module:table/tabletoolbar~TableToolbar}
@@ -34,7 +34,7 @@ npm install --save @ckeditor/ckeditor5-table
 
 ## Contribute
 
-The source code of this package is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-table.
+The source code of this package is available on GitHub in [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-table](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-table).
 
 ## External links
 

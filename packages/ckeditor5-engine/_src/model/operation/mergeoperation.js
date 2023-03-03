@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -30,7 +30,7 @@ export default class MergeOperation extends Operation {
 	 * Creates a merge operation.
 	 *
 	 * @param {module:engine/model/position~Position} sourcePosition Position inside the merged element. All nodes from that
-	 * element after that position will be moved to {@link ~#targetPosition}.
+	 * element after that position will be moved to {@link #targetPosition}.
 	 * @param {Number} howMany Summary offset size of nodes which will be moved from the merged element to the new parent.
 	 * @param {module:engine/model/position~Position} targetPosition Position which the nodes from the merged elements will be moved to.
 	 * @param {module:engine/model/position~Position} graveyardPosition Position in graveyard to which the merged element will be moved.
@@ -41,7 +41,7 @@ export default class MergeOperation extends Operation {
 		super( baseVersion );
 
 		/**
-		 * Position inside the merged element. All nodes from that element after that position will be moved to {@link ~#targetPosition}.
+		 * Position inside the merged element. All nodes from that element after that position will be moved to {@link #targetPosition}.
 		 *
 		 * @member {module:engine/model/position~Position} module:engine/model/operation/mergeoperation~MergeOperation#sourcePosition
 		 */

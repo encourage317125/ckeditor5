@@ -27,7 +27,7 @@ Some CSP directives have an impact on certain rich-text editor features. Here is
 * `default-src 'none'`: Resets the policy and blocks everything. All successive directives work as a whitelist. By itself, as long as it is followed by other directives, it has no impact on the editor.
 * `connect-src 'self'`
 	* Allows the {@link features/image-upload editor upload features} to use [`XMLHttpReqests`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) (Ajax) to upload files to the server, for instance, when an image is pasted or dropped into the editor content. The `'self`' value ensures the requests remain within the same host.
-	* Allows {@link installation/advanced/saving-data#autosave-feature auto–saving editor data} using `XMLHttpRequest`.
+	* Allows {@link installation/getting-started/getting-and-setting-data#autosave-feature auto–saving editor data} using `XMLHttpRequest`.
 
 	**Note**: To use [CKEditor Cloud Services](https://ckeditor.com/ckeditor-cloud-services/), include the `http://*.cke-cs.com` domain in the `connect-src` directive, for instance: `connect-src 'self' http://*.cke-cs.com`.
 * `script-src 'self'`: Allows the execution of JavaScript from the current host only and can be applied only if the CKEditor 5 script file (`<script src="[ckeditor-build-path]/ckeditor.js"></script>`) is also served from that host.
@@ -41,9 +41,9 @@ Some CSP directives have an impact on certain rich-text editor features. Here is
 
 	**Note**: Use the more strict `img-src 'self'` if all images in the editor content are hosted from the same domain and you do **not** want to enable the {@link features/media-embed media embed} and {@link features/paste-from-word paste from Word} features.
 * `style-src 'self' 'unsafe-inline'`: `'unsafe-inline'` is necessary for:
-	* webpack's [style-loader](https://github.com/webpack-contrib/style-loader) to load the {@link framework/guides/theme-customization#styles-processing-and-bundling editor UI styles}.
+	* webpack's [style-loader](https://github.com/webpack-contrib/style-loader) to load the {@link framework/theme-customization#styles-processing-and-bundling editor UI styles}.
 
-	**Note**: You can {@link installation/advanced/integrating-from-source#option-extracting-css extract styles to a separate `.css` file} during the editor building process and remove this directive.
+	**Note**: You can {@link installation/advanced/integrating-from-source-webpack#option-extracting-css extract styles to a separate `.css` file} during the editor building process and remove this directive.
 	* Certain editor content styles to work properly. For instance, you are going to need it if you want to enable such editor features as {@link features/font font} or {@link features/text-alignment text alignment} or any other feature that uses inline `style="..."` attributes in the content.
 * `frame-src *`: Necessary for the {@link features/media-embed media embed} feature to load media with previews (containing `<iframe>`).
 
@@ -63,7 +63,7 @@ default-src 'none'; connect-src 'self'; script-src 'self'; img-src 'self'; style
 
 This comes with some trade–offs, though. For example, it requires you to:
 
-* Use an editor build with the {@link installation/advanced/integrating-from-source#option-extracting-css styles extracted to a separate `.css` file} (no style-loader).
+* Use an editor build with the {@link installation/advanced/integrating-from-source-webpack#option-extracting-css styles extracted to a separate `.css` file} (no style-loader).
 * Load images in the content from the same host.
 * Load previewable media in the content from the same host.
 * Give up certain features that use inline styles like {@link features/font font} or {@link features/text-alignment text alignment}.

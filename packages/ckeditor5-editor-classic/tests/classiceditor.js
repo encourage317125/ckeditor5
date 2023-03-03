@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -14,8 +14,6 @@ import ClassicEditor from '../src/classiceditor';
 import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
 import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
 import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
-import DataApiMixin from '@ckeditor/ckeditor5-core/src/editor/utils/dataapimixin';
-import ElementApiMixin from '@ckeditor/ckeditor5-core/src/editor/utils/elementapimixin';
 import RootElement from '@ckeditor/ckeditor5-engine/src/model/rootelement';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 
@@ -51,12 +49,13 @@ describe( 'ClassicEditor', () => {
 			expect( editor.data.processor ).to.be.instanceof( HtmlDataProcessor );
 		} );
 
-		it( 'has a Data Interface', () => {
-			expect( testUtils.isMixed( ClassicEditor, DataApiMixin ) ).to.true;
+		it( 'mixes DataApiMixin', () => {
+			expect( ClassicEditor.prototype ).have.property( 'setData' ).to.be.a( 'function' );
+			expect( ClassicEditor.prototype ).have.property( 'getData' ).to.be.a( 'function' );
 		} );
 
-		it( 'has a Element Interface', () => {
-			expect( testUtils.isMixed( ClassicEditor, ElementApiMixin ) ).to.true;
+		it( 'mixes ElementApiMixin', () => {
+			expect( ClassicEditor.prototype ).have.property( 'updateSourceElement' ).to.be.a( 'function' );
 		} );
 
 		it( 'creates main root element', () => {

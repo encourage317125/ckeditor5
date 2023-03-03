@@ -235,15 +235,76 @@ Finally, import the build in your application:
 
 ## Using CKEditor from source
 
-Integrating the rich text editor from source allows you to use the full power of the {@link framework/index CKEditor 5 Framework}.
+Integrating the rich text editor from source allows you to use the full power of the {@link framework/index CKEditor 5 Framework}. You have two options regarding building your application: Vite or Webpack.
+
+### Vite
+
+This guide assumes that you use `create-vue` as your boilerplate. To get started with Vite and Vue, run the command below.
+
+```bash
+npm init vue@latest ckeditor5-vue-example
+```
+
+This command will install and execute `create-vue`, the official project scaffolding tool for Vue. It will also allow you to customize your project, for example, by adding Typescript. Choose your preferred options.
+
+#### Installing necessary packages
+
+You need two packages to use CKEditor from source with Vue and Vite: the official Vue component and the Vite plugin.
+
+<info-box>
+	Using the Vite plugin to build CKEditor 5 from the source in Vite is still in the experimental phase. We encourage you to test it and give us feedback. To read more about integration with Vite or its limitations, check the {@link installation/advanced/integrating-from-source-vite Integrating from source with Vite} guide.
+</info-box>
+
+Install necessary packages using the following command.
+
+```bash
+npm install --save @ckeditor/vite-plugin-ckeditor5 @ckeditor/ckeditor5-vue
+```
+
+#### Configuring `vite.config.js`
+
+Configuring CKEditor with Vue and Vite is simple. Modify the existing config by importing `ckeditor5` and adding it to the list of plugins.
+
+```js
+// vite.config.js
+
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import ckeditor5 from '@ckeditor/vite-plugin-ckeditor5';
+
+export default defineConfig( {
+  plugins: [
+    vue(),
+    ckeditor5( { theme: require.resolve( '@ckeditor/ckeditor5-theme-lark' ) } )
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath( new URL( './src', import.meta.url ) )
+    }
+  }
+} )
+```
+
+The configuration slightly differs for ESM projects. If you try to start the dev server using the `npm run dev` command, you may encounter an error: `require.resolve is not a function`. In this case, you need some additional lines of code.
+
+```js
+// vite.config.js
+
+import { createRequire } from 'node:module';
+const require = createRequire( import.meta.url );
+```
+
+Now, your setup with Vite and Vue is complete. You can also check how to configure Webpack in the next section or move straight to [Using the editor from source](#using-the-editor-from-source).
+
+### Webpack
 
 This guide assumes that you are using [Vue CLI 4.5.0+](https://cli.vuejs.org) as your boilerplate and your application has been created using the [`vue create`](https://cli.vuejs.org/guide/creating-a-project.html#vue-create) command.
 
 <info-box>
-	Learn more about building CKEditor from source in the {@link installation/advanced/integrating-from-source Integrating the editor from the source} guide.
+	Learn more about building CKEditor from source in the {@link installation/advanced/integrating-from-source-webpack Integrating the editor from the source} guide.
 </info-box>
 
-### Configuring `vue.config.js`
+#### Configuring `vue.config.js`
 
 To build CKEditor with your application, certain changes must be made to the default project configuration.
 
@@ -252,7 +313,7 @@ First, install the necessary dependencies:
 ```bash
 npm install --save \
     @ckeditor/ckeditor5-vue \
-    @ckeditor/ckeditor5-dev-webpack-plugin \
+    @ckeditor/ckeditor5-dev-translations \
     @ckeditor/ckeditor5-dev-utils \
     postcss-loader@4 \
     raw-loader@4
@@ -262,7 +323,7 @@ Edit the `vue.config.js` file and use the following configuration. If the file i
 
 ```js
 const path = require( 'path' );
-const CKEditorWebpackPlugin = require( '@ckeditor/ckeditor5-dev-webpack-plugin' );
+const { CKEditorTranslationsPlugin } = require( '@ckeditor/ckeditor5-dev-translations' );
 const { styles } = require( '@ckeditor/ckeditor5-dev-utils' );
 
 module.exports = {
@@ -276,7 +337,7 @@ module.exports = {
 	configureWebpack: {
 		plugins: [
 			// CKEditor needs its own plugin to be built using webpack.
-			new CKEditorWebpackPlugin( {
+			new CKEditorTranslationsPlugin( {
 				// See https://ckeditor.com/docs/ckeditor5/latest/features/ui-language.html
 				language: 'en',
 
@@ -342,7 +403,7 @@ module.exports = {
 
 ### Using the editor from source
 
-Having configured `vue.config.js`, you can choose the building blocks of your editor. Install the packages necessary for your integration, but please remember that all packages (excluding `@ckeditor/ckeditor5-dev-*` and `@ckeditor/ckeditor5-vue`) {@link installation/getting-started/installing-plugins#requirements must have the same version as the base editor package}.
+Having your project configured, you can choose the building blocks of your editor. Install the packages necessary for your integration, but please remember that all packages (excluding `@ckeditor/ckeditor5-dev-*`, `@ckeditor/ckeditor5-vue`, and `@ckeditor/vite-plugin-ckeditor5`) {@link installation/plugins/installing-plugins#requirements must have the same version as the base editor package}.
 
 ```bash
 npm install --save \
@@ -420,7 +481,7 @@ Now all you need to do is specify the list of rich text editor options (**includ
 
 ## Using the Document editor build
 
-If you use the {@link framework/guides/document-editor Document editor} in your application, you need to {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create manually add the editor toolbar to the DOM}.
+If you use the {@link framework/document-editor Document editor} in your application, you need to {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create manually add the editor toolbar to the DOM}.
 
 Since accessing the editor toolbar is not possible until after the editor instance is {@link module:core/editor/editor~Editor#event:ready ready}, put your toolbar insertion code in a method executed upon the [`ready`](#ready) event of the component, like in the following example:
 
@@ -462,7 +523,7 @@ CKEditor 5 supports {@link features/ui-language multiple UI languages}, and so d
 
 ### Predefined builds
 
-When using one of the {@link installation/getting-started/predefined-builds#available-builds official editor builds}, you need to import the translations first.
+When using one of the {@link installation/getting-started/predefined-builds predefined builds}, you need to import the translations first.
 
 * When using a [direct script include](#direct-script-include):
 	```html
@@ -505,13 +566,13 @@ For more information, please refer to the {@link features/ui-language Setting th
 
 ### CKEditor 5 built from source
 
-Using the editor [built from source](#using-ckeditor-from-source) requires you to modify the webpack configuration. Pass the `language` (also `additionalLanguages`) to the constructor of  [`CKEditorWebpackPlugin`](https://www.npmjs.com/package/@ckeditor/ckeditor5-dev-webpack-plugin) to localize your editor:
+Using the editor [built from source](#using-ckeditor-from-source) requires you to modify the webpack configuration. Pass the `language` (also `additionalLanguages`) to the constructor of  [`CKEditorTranslationsPlugin`](https://www.npmjs.com/package/@ckeditor/ckeditor5-dev-translations) to localize your editor:
 
 ```js
 // vue.config.js
 // ...
 
-const CKEditorWebpackPlugin = require( '@ckeditor/ckeditor5-dev-webpack-plugin' );
+const { CKEditorTranslationsPlugin } = require( '@ckeditor/ckeditor5-dev-translations' );
 
 // ...
 
@@ -521,7 +582,7 @@ module.exports = {
 	configureWebpack: {
 		plugins: [
 			// CKEditor needs its own plugin to be built using webpack.
-			new CKEditorWebpackPlugin( {
+			new CKEditorTranslationsPlugin( {
 				// The UI language. Language codes follow the https://en.wikipedia.org/wiki/ISO_639-1 format.
 				language: 'de',
 
@@ -754,4 +815,4 @@ Corresponds to the {@link module:core/editor/editor~Editor#event:destroy `destro
 
 ## Contributing and reporting issues
 
-The source code of this component is available on GitHub in https://github.com/ckeditor/ckeditor5-vue.
+The source code of this component is available on GitHub in [https://github.com/ckeditor/ckeditor5-vue](https://github.com/ckeditor/ckeditor5-vue).

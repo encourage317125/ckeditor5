@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -44,7 +44,17 @@ describe( 'Document', () => {
 				baseVersion: 0,
 				isDocumentOperation: true,
 				_execute: sinon.stub().returns( data ),
-				_validate: () => {}
+				_validate: () => {},
+				toJSON() {
+					// This method creates only a shallow copy, all nested objects should be defined separately.
+					// See https://github.com/ckeditor/ckeditor5-engine/issues/1477.
+					const json = Object.assign( {}, this );
+
+					// Remove reference to the parent `Batch` to avoid circular dependencies.
+					delete json.batch;
+
+					return json;
+				}
 			};
 
 			batch = new Batch();

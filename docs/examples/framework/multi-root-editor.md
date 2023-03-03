@@ -11,7 +11,7 @@ The main difference between a multi-root editor and using multiple separate edit
 
 Out of the box, CKEditor 5 does not offer a ready-to-use multi-root editor yet. However, such an editor can be implemented by using the {@link framework/index CKEditor 5 Framework}.
 
-Check out the {@link framework/guides/custom-editor-creator "Implementing a custom editor creator" guide} which contains the source code of the demo below.
+Check out the {@link framework/custom-editor-creator "Implementing a custom editor creator" guide} which contains the source code of the demo below.
 
 {@snippet examples/multi-root-editor}
 
@@ -26,8 +26,7 @@ import Editor from '@ckeditor/ckeditor5-core/src/editor/editor';
 import DataApiMixin from '@ckeditor/ckeditor5-core/src/editor/utils/dataapimixin';
 import getDataFromElement from '@ckeditor/ckeditor5-utils/src/dom/getdatafromelement';
 import setDataInElement from '@ckeditor/ckeditor5-utils/src/dom/setdatainelement';
-import mix from '@ckeditor/ckeditor5-utils/src/mix';
-import EditorUI from '@ckeditor/ckeditor5-core/src/editor/editorui';
+import EditorUI from '@ckeditor/ckeditor5-ui/src/editorui/editorui';
 import { enablePlaceholder } from '@ckeditor/ckeditor5-engine/src/view/placeholder';
 import EditorUIView from '@ckeditor/ckeditor5-ui/src/editorui/editoruiview';
 import InlineEditableUIView from '@ckeditor/ckeditor5-ui/src/editableui/inline/inlineeditableuiview';
@@ -67,7 +66,7 @@ import CloudServices from '@ckeditor/ckeditor5-cloud-services/src/cloudservices'
  * @implements module:core/editor/editorwithui~EditorWithUI
  * @extends module:core/editor/editor~Editor
  */
-class MultirootEditor extends Editor {
+class MultirootEditor extends DataApiMixin( Editor ) {
 	/**
 	 * Creates an instance of the multiroot editor.
 	 *
@@ -148,8 +147,6 @@ class MultirootEditor extends Editor {
 		} );
 	}
 }
-
-mix( MultirootEditor, DataApiMixin );
 
 /**
  * The multiroot editor UI class.

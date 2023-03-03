@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -8,33 +8,42 @@
  */
 
 import View from '../view';
-import FocusTracker from '@ckeditor/ckeditor5-utils/src/focustracker';
 import FocusCycler from '../focuscycler';
-import KeystrokeHandler from '@ckeditor/ckeditor5-utils/src/keystrokehandler';
 import ToolbarSeparatorView from './toolbarseparatorview';
 import ToolbarLineBreakView from './toolbarlinebreakview';
-import ResizeObserver from '@ckeditor/ckeditor5-utils/src/dom/resizeobserver';
 import preventDefault from '../bindings/preventdefault';
-import Rect from '@ckeditor/ckeditor5-utils/src/dom/rect';
-import isVisible from '@ckeditor/ckeditor5-utils/src/dom/isvisible';
-import global from '@ckeditor/ckeditor5-utils/src/dom/global';
 import { createDropdown, addToolbarToDropdown } from '../dropdown/utils';
-import { logWarning } from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import normalizeToolbarConfig from './normalizetoolbarconfig';
-import { isObject } from 'lodash-es';
-
-import '../../theme/components/toolbar/toolbar.css';
 
 import type ComponentFactory from '../componentfactory';
 import type ViewCollection from '../viewcollection';
 import type DropdownView from '../dropdown/dropdownview';
 import type DropdownPanelFocusable from '../dropdown/dropdownpanelfocusable';
-import type { Locale } from '@ckeditor/ckeditor5-utils';
-import type { CollectionAddEvent, CollectionChangeEvent, CollectionRemoveEvent } from '@ckeditor/ckeditor5-utils/src/collection';
-import type { ObservableChangeEvent } from '@ckeditor/ckeditor5-utils/src/observablemixin';
-import type { ToolbarConfig, ToolbarConfigItem } from '@ckeditor/ckeditor5-core/src/editor/editorconfig';
 
-import { icons } from '@ckeditor/ckeditor5-core';
+import {
+	FocusTracker,
+	KeystrokeHandler,
+	Rect,
+	ResizeObserver,
+	global,
+	isVisible,
+	logWarning,
+	type CollectionAddEvent,
+	type CollectionChangeEvent,
+	type CollectionRemoveEvent,
+	type Locale,
+	type ObservableChangeEvent
+} from '@ckeditor/ckeditor5-utils';
+
+import {
+	icons,
+	type ToolbarConfig,
+	type ToolbarConfigItem
+} from '@ckeditor/ckeditor5-core';
+
+import { isObject } from 'lodash-es';
+
+import '../../theme/components/toolbar/toolbar.css';
 
 const { threeVerticalDots } = icons;
 
@@ -50,27 +59,115 @@ const NESTED_TOOLBAR_ICONS: Record<string, string | undefined> = {
 
 /**
  * The toolbar view class.
- *
- * @extends module:ui/view~View
- * @implements module:ui/dropdown/dropdownpanelfocusable~DropdownPanelFocusable
  */
 export default class ToolbarView extends View implements DropdownPanelFocusable {
+	/**
+	 * A reference to the options object passed to the constructor.
+	 */
 	public readonly options: ToolbarOptions;
+
+	/**
+	 * A collection of toolbar items (buttons, dropdowns, etc.).
+	 */
 	public readonly items: ViewCollection;
+
+	/**
+	 * Tracks information about the DOM focus in the toolbar.
+	 */
 	public readonly focusTracker: FocusTracker;
+
+	/**
+	 * An instance of the {@link module:utils/keystrokehandler~KeystrokeHandler}
+	 * to handle keyboard navigation in the toolbar.
+	 */
 	public readonly keystrokes: KeystrokeHandler;
+
+	/**
+	 * A (child) view containing {@link #items toolbar items}.
+	 */
 	public readonly itemsView: ItemsView;
+
+	/**
+	 * A top–level collection aggregating building blocks of the toolbar.
+	 *
+	 *	┌───────────────── ToolbarView ─────────────────┐
+	 *	| ┌──────────────── #children ────────────────┐ |
+	 *	| |   ┌──────────── #itemsView ───────────┐   | |
+	 *	| |   | [ item1 ] [ item2 ] ... [ itemN ] |   | |
+	 *	| |   └──────────────────────────────────-┘   | |
+	 *	| └───────────────────────────────────────────┘ |
+	 *	└───────────────────────────────────────────────┘
+	 *
+	 * By default, it contains the {@link #itemsView} but it can be extended with additional
+	 * UI elements when necessary.
+	 */
 	public readonly children: ViewCollection;
+
+	/**
+	 * A collection of {@link #items} that take part in the focus cycling
+	 * (i.e. navigation using the keyboard). Usually, it contains a subset of {@link #items} with
+	 * some optional UI elements that also belong to the toolbar and should be focusable
+	 * by the user.
+	 */
 	public readonly focusables: ViewCollection;
 
 	declare public locale: Locale;
+
+	/**
+	 * Label used by assistive technologies to describe this toolbar element.
+	 *
+	 * @observable
+	 * @default 'Editor toolbar'
+	 */
 	declare public ariaLabel: string;
+
+	/**
+	 * The maximum width of the toolbar element.
+	 *
+	 * **Note**: When set to a specific value (e.g. `'200px'`), the value will affect the behavior of the
+	 * {@link module:ui/toolbar/toolbarview~ToolbarOptions#shouldGroupWhenFull}
+	 * option by changing the number of {@link #items} that will be displayed in the toolbar at a time.
+	 *
+	 * @observable
+	 * @default 'auto'
+	 */
 	declare public maxWidth: string;
+
+	/**
+	 * An additional CSS class added to the {@link #element}.
+	 *
+	 * @observable
+	 * @member {String} #class
+	 */
 	declare public class: string | undefined;
+
+	/**
+	 * When set true, makes the toolbar look compact with {@link #element}.
+	 *
+	 * @observable
+	 * @default false
+	 */
 	declare public isCompact: boolean;
+
+	/**
+	 * Controls the orientation of toolbar items. Only available when
+	 * {@link module:ui/toolbar/toolbarview~ToolbarOptions#shouldGroupWhenFull dynamic items grouping}
+	 * is **disabled**.
+	 *
+	 * @observable
+	 */
 	declare public isVertical: boolean;
 
+	/**
+	 * Helps cycling over {@link #focusables focusable items} in the toolbar.
+	 */
 	private readonly _focusCycler: FocusCycler;
+
+	/**
+	 * An instance of the active toolbar behavior that shapes its look and functionality.
+	 *
+	 * See {@link module:ui/toolbar/toolbarview~ToolbarBehavior} to learn more.
+	 */
 	private readonly _behavior: ToolbarBehavior;
 
 	/**
@@ -78,8 +175,8 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 	 *
 	 * Also see {@link #render}.
 	 *
-	 * @param {module:utils/locale~Locale} locale The localization services instance.
-	 * @param {module:ui/toolbar/toolbarview~ToolbarOptions} [options] Configuration options of the toolbar.
+	 * @param locale The localization services instance.
+	 * @param options Configuration options of the toolbar.
 	 */
 	constructor( locale: Locale, options?: ToolbarOptions ) {
 		super( locale );
@@ -87,132 +184,22 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 		const bind = this.bindTemplate;
 		const t = this.t!;
 
-		/**
-		 * A reference to the options object passed to the constructor.
-		 *
-		 * @readonly
-		 * @member {module:ui/toolbar/toolbarview~ToolbarOptions}
-		 */
 		this.options = options || {};
 
-		/**
-		 * Label used by assistive technologies to describe this toolbar element.
-		 *
-		 * @default 'Editor toolbar'
-		 * @member {String} #ariaLabel
-		 */
 		this.set( 'ariaLabel', t( 'Editor toolbar' ) );
-
-		/**
-		 * The maximum width of the toolbar element.
-		 *
-		 * **Note**: When set to a specific value (e.g. `'200px'`), the value will affect the behavior of the
-		 * {@link module:ui/toolbar/toolbarview~ToolbarOptions#shouldGroupWhenFull}
-		 * option by changing the number of {@link #items} that will be displayed in the toolbar at a time.
-		 *
-		 * @observable
-		 * @default 'auto'
-		 * @member {String} #maxWidth
-		 */
 		this.set( 'maxWidth', 'auto' );
 
-		/**
-		 * A collection of toolbar items (buttons, dropdowns, etc.).
-		 *
-		 * @readonly
-		 * @member {module:ui/viewcollection~ViewCollection}
-		 */
 		this.items = this.createCollection();
-
-		/**
-		 * Tracks information about the DOM focus in the toolbar.
-		 *
-		 * @readonly
-		 * @member {module:utils/focustracker~FocusTracker}
-		 */
 		this.focusTracker = new FocusTracker();
-
-		/**
-		 * An instance of the {@link module:utils/keystrokehandler~KeystrokeHandler}
-		 * to handle keyboard navigation in the toolbar.
-		 *
-		 * @readonly
-		 * @member {module:utils/keystrokehandler~KeystrokeHandler}
-		 */
 		this.keystrokes = new KeystrokeHandler();
 
-		/**
-		 * An additional CSS class added to the {@link #element}.
-		 *
-		 * @observable
-		 * @member {String} #class
-		 */
 		this.set( 'class', undefined );
-
-		/**
-		 * When set true, makes the toolbar look compact with {@link #element}.
-		 *
-		 * @observable
-		 * @default false
-		 * @member {String} #isCompact
-		 */
 		this.set( 'isCompact', false );
 
-		/**
-		 * A (child) view containing {@link #items toolbar items}.
-		 *
-		 * @readonly
-		 * @member {module:ui/toolbar/toolbarview~ItemsView}
-		 */
 		this.itemsView = new ItemsView( locale );
-
-		/**
-		 * A top–level collection aggregating building blocks of the toolbar.
-		 *
-		 *	┌───────────────── ToolbarView ─────────────────┐
-		 *	| ┌──────────────── #children ────────────────┐ |
-		 *	| |   ┌──────────── #itemsView ───────────┐   | |
-		 *	| |   | [ item1 ] [ item2 ] ... [ itemN ] |   | |
-		 *	| |   └──────────────────────────────────-┘   | |
-		 *	| └───────────────────────────────────────────┘ |
-		 *	└───────────────────────────────────────────────┘
-		 *
-		 * By default, it contains the {@link #itemsView} but it can be extended with additional
-		 * UI elements when necessary.
-		 *
-		 * @readonly
-		 * @member {module:ui/viewcollection~ViewCollection}
-		 */
 		this.children = this.createCollection();
 		this.children.add( this.itemsView );
-
-		/**
-		 * A collection of {@link #items} that take part in the focus cycling
-		 * (i.e. navigation using the keyboard). Usually, it contains a subset of {@link #items} with
-		 * some optional UI elements that also belong to the toolbar and should be focusable
-		 * by the user.
-		 *
-		 * @readonly
-		 * @member {module:ui/viewcollection~ViewCollection}
-		 */
 		this.focusables = this.createCollection();
-
-		/**
-		 * Controls the orientation of toolbar items. Only available when
-		 * {@link module:ui/toolbar/toolbarview~ToolbarOptions#shouldGroupWhenFull dynamic items grouping}
-		 * is **disabled**.
-		 *
-		 * @observable
-		 * @member {Boolean} #isVertical
-		 */
-
-		/**
-		 * Helps cycling over {@link #focusables focusable items} in the toolbar.
-		 *
-		 * @readonly
-		 * @protected
-		 * @member {module:ui/focuscycler~FocusCycler}
-		 */
 
 		const isRtl = locale.uiLanguageDirection === 'rtl';
 
@@ -259,15 +246,6 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 			}
 		} );
 
-		/**
-		 * An instance of the active toolbar behavior that shapes its look and functionality.
-		 *
-		 * See {@link module:ui/toolbar/toolbarview~ToolbarBehavior} to learn more.
-		 *
-		 * @protected
-		 * @readonly
-		 * @member {module:ui/toolbar/toolbarview~ToolbarBehavior}
-		 */
 		this._behavior = this.options.shouldGroupWhenFull ? new DynamicGrouping( this ) : new StaticLayout( this );
 	}
 
@@ -325,9 +303,9 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 	 * A utility that expands the plain toolbar configuration into
 	 * {@link module:ui/toolbar/toolbarview~ToolbarView#items} using a given component factory.
 	 *
-	 * @param {Array.<String>|Object} itemsOrConfig The toolbar items or the entire toolbar configuration object.
-	 * @param {module:ui/componentfactory~ComponentFactory} factory A factory producing toolbar items.
-	 * @param {Array.<String>} [removeItems] An array of items names to be removed from the configuration. When present, applies
+	 * @param itemsOrConfig The toolbar items or the entire toolbar configuration object.
+	 * @param factory A factory producing toolbar items.
+	 * @param removeItems An array of items names to be removed from the configuration. When present, applies
 	 * to this toolbar and all nested ones as well.
 	 */
 	public fillFromConfig(
@@ -335,6 +313,22 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 		factory: ComponentFactory,
 		removeItems?: Array<string>
 	): void {
+		this.items.addMany( this._buildItemsFromConfig( itemsOrConfig, factory, removeItems ) );
+	}
+
+	/**
+	 * A utility that expands the plain toolbar configuration into a list of view items using a given component factory.
+	 *
+	 * @param itemsOrConfig The toolbar items or the entire toolbar configuration object.
+	 * @param factory A factory producing toolbar items.
+	 * @param removeItems An array of items names to be removed from the configuration. When present, applies
+	 * to this toolbar and all nested ones as well.
+	 */
+	private _buildItemsFromConfig(
+		itemsOrConfig: ToolbarConfig | undefined,
+		factory: ComponentFactory,
+		removeItems?: Array<string>
+	): Array<View> {
 		const config = normalizeToolbarConfig( itemsOrConfig );
 		const normalizedRemoveItems = removeItems || config.removeItems;
 		const itemsToAdd = this._cleanItemsConfiguration( config.items, factory, normalizedRemoveItems )
@@ -351,18 +345,17 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 			} )
 			.filter( ( item ): item is View => !!item );
 
-		this.items.addMany( itemsToAdd );
+		return itemsToAdd;
 	}
 
 	/**
 	 * Cleans up the {@link module:ui/toolbar/toolbarview~ToolbarView#items} of the toolbar by removing unwanted items and
 	 * duplicated (obsolete) separators or line breaks.
 	 *
-	 * @private
-	 * @param {Array.<String>} items The toolbar items configuration.
-	 * @param {module:ui/componentfactory~ComponentFactory} factory A factory producing toolbar items.
-	 * @param {Array.<String>} removeItems An array of items names to be removed from the configuration.
-	 * @returns {Array.<String>}  Items after the clean-up.
+	 * @param items The toolbar items configuration.
+	 * @param factory A factory producing toolbar items.
+	 * @param removeItems An array of items names to be removed from the configuration.
+	 * @returns Items after the clean-up.
 	 */
 	private _cleanItemsConfiguration(
 		items: Array<ToolbarConfigItem>,
@@ -389,12 +382,14 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 						 * is disabled in the toolbar configuration.
 						 * To do this, set the `shouldNotGroupWhenFull` option to `true` in the editor configuration:
 						 *
-						 *		const config = {
-						 *			toolbar: {
-						 *				items: [ ... ],
-						 *				shouldNotGroupWhenFull: true
-						 *			}
-						 *		}
+						 * ```ts
+						 * const config = {
+						 * 	toolbar: {
+						 * 		items: [ ... ],
+						 * 		shouldNotGroupWhenFull: true
+						 * 	}
+						 * }
+						 * ```
 						 *
 						 * Learn more about {@link module:core/editor/editorconfig~EditorConfig#toolbar toolbar configuration}.
 						 *
@@ -422,10 +417,12 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 					 *
 					 * You can use the following snippet to retrieve all available toolbar items:
 					 *
-					 *		Array.from( editor.ui.componentFactory.names() );
+					 * ```ts
+					 * Array.from( editor.ui.componentFactory.names() );
+					 * ```
 					 *
 					 * @error toolbarview-item-unavailable
-					 * @param {String|Object} item The name of the component or nested toolbar definition.
+					 * @param item The name of the component or nested toolbar definition.
 					 */
 					logWarning( 'toolbarview-item-unavailable', { item } );
 
@@ -441,9 +438,7 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 	/**
 	 * Remove leading, trailing, and duplicated separators (`-` and `|`).
 	 *
-	 * @private
-	 * @param {Array.<String>} items
-	 * @returns {Array.<String>} Toolbar items after the separator and line break clean-up.
+	 * @returns Toolbar items after the separator and line break clean-up.
 	 */
 	private _cleanSeparatorsAndLineBreaks( items: Array<ToolbarConfigItem> ) {
 		const nonSeparatorPredicate = ( item: ToolbarConfigItem ) => ( item !== '-' && item !== '|' );
@@ -481,18 +476,16 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 	/**
 	 * Creates a user-defined dropdown containing a toolbar with items.
 	 *
-	 * @private
-	 * @param {Object} definition A definition of the nested toolbar dropdown.
-	 * @param {String} definition.label A label of the dropdown.
-	 * @param {String|Boolean} [definition.icon] An icon of the drop-down. One of 'bold', 'plus', 'text', 'importExport', 'alignLeft',
+	 * @param definition A definition of the nested toolbar dropdown.
+	 * @param definition.label A label of the dropdown.
+	 * @param definition.icon An icon of the drop-down. One of 'bold', 'plus', 'text', 'importExport', 'alignLeft',
 	 * 'paragraph' or an SVG string. When `false` is passed, no icon will be used.
-	 * @param {Boolean} [definition.withText=false] When set `true`, the label of the dropdown will be visible. See
+	 * @param definition.withText When set `true`, the label of the dropdown will be visible. See
 	 * {@link module:ui/button/buttonview~ButtonView#withText} to learn more.
-	 * @param {Boolean|String|Function} [definition.tooltip=true] A tooltip of the dropdown button. See
-	 * {@link module:ui/button/buttonview~ButtonView#tooltip} to learn more.
-	 * @param {module:ui/componentfactory~ComponentFactory} componentFactory Component factory used to create items
+	 * @param definition.tooltip A tooltip of the dropdown button. See
+	 * {@link module:ui/button/buttonview~ButtonView#tooltip} to learn more. Defaults to `true`.
+	 * @param componentFactory Component factory used to create items
 	 * of the nested toolbar.
-	 * @returns {module:ui/dropdown/dropdownview~DropdownView}
 	 */
 	private _createNestedToolbarDropdown(
 		definition: Exclude<ToolbarConfigItem, string>,
@@ -518,11 +511,13 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 			 * Without a label, the dropdown becomes inaccessible to users relying on assistive technologies.
 			 * Make sure the `label` property is set in your drop-down configuration:
 			 *
- 			 *		{
- 			 *			label: 'A human-readable label',
-			 *			icon: '...',
-			 *			items: [ ... ]
- 			 *		},
+			 * ```json
+ 			 * {
+ 			 * 	label: 'A human-readable label',
+			 * 	icon: '...',
+			 * 	items: [ ... ]
+ 			 * },
+			 * ```
 			 *
 			 * Learn more about {@link module:core/editor/editorconfig~EditorConfig#toolbar toolbar configuration}.
 			 *
@@ -548,27 +543,26 @@ export default class ToolbarView extends View implements DropdownPanelFocusable 
 			dropdownView.buttonView.withText = true;
 		}
 
-		addToolbarToDropdown( dropdownView, [] );
-
-		dropdownView.toolbarView!.fillFromConfig( items, componentFactory, removeItems );
+		addToolbarToDropdown( dropdownView, () => (
+			dropdownView.toolbarView!._buildItemsFromConfig( items, componentFactory, removeItems )
+		) );
 
 		return dropdownView;
 	}
-
-	/**
-	 * Fired when some toolbar {@link #items} were grouped or ungrouped as a result of some change
-	 * in the toolbar geometry.
-	 *
-	 * **Note**: This event is always fired **once** regardless of the number of items that were be
-	 * grouped or ungrouped at a time.
-	 *
-	 * **Note**: This event is fired only if the items grouping functionality was enabled in
-	 * the first place (see {@link module:ui/toolbar/toolbarview~ToolbarOptions#shouldGroupWhenFull}).
-	 *
-	 * @event groupedItemsUpdate
-	 */
 }
 
+/**
+ * Fired when some toolbar {@link ~ToolbarView#items} were grouped or ungrouped as a result of some change
+ * in the toolbar geometry.
+ *
+ * **Note**: This event is always fired **once** regardless of the number of items that were be
+ * grouped or ungrouped at a time.
+ *
+ * **Note**: This event is fired only if the items grouping functionality was enabled in
+ * the first place (see {@link module:ui/toolbar/toolbarview~ToolbarOptions#shouldGroupWhenFull}).
+ *
+ * @eventName ~ToolbarView#groupedItemsUpdate
+ */
 export type ToolbarViewGroupedItemsUpdateEvent = {
 	name: 'groupedItemsUpdate';
 	args: [];
@@ -577,12 +571,12 @@ export type ToolbarViewGroupedItemsUpdateEvent = {
 /**
  * An inner block of the {@link module:ui/toolbar/toolbarview~ToolbarView} hosting its
  * {@link module:ui/toolbar/toolbarview~ToolbarView#items}.
- *
- * @private
- * @extends module:ui/view~View
  */
 class ItemsView extends View {
-	public children: ViewCollection;
+	/**
+	 * A collection of items (buttons, dropdowns, etc.).
+	 */
+	public readonly children: ViewCollection;
 
 	/**
 	 * @inheritDoc
@@ -590,12 +584,6 @@ class ItemsView extends View {
 	constructor( locale?: Locale ) {
 		super( locale );
 
-		/**
-		 * A collection of items (buttons, dropdowns, etc.).
-		 *
-		 * @readonly
-		 * @member {module:ui/viewcollection~ViewCollection}
-		 */
 		this.children = this.createCollection();
 
 		this.setTemplate( {
@@ -615,17 +603,13 @@ class ItemsView extends View {
  * A toolbar behavior that makes it static and unresponsive to the changes of the environment.
  * At the same time, it also makes it possible to display a toolbar with a vertical layout
  * using the {@link module:ui/toolbar/toolbarview~ToolbarView#isVertical} property.
- *
- * @private
- * @implements module:ui/toolbar/toolbarview~ToolbarBehavior
  */
 class StaticLayout implements ToolbarBehavior {
 	/**
 	 * Creates an instance of the {@link module:ui/toolbar/toolbarview~StaticLayout} toolbar
 	 * behavior.
 	 *
-	 * @param {module:ui/toolbar/toolbarview~ToolbarView} view An instance of the toolbar that this behavior
-	 * is added to.
+	 * @param view An instance of the toolbar that this behavior is added to.
 	 */
 	constructor( view: ToolbarView ) {
 		const bind = view.bindTemplate;
@@ -667,175 +651,139 @@ class StaticLayout implements ToolbarBehavior {
  * that do not fit visually into a single row of the toolbar (due to limited space).
  * Items that do not fit are aggregated in a dropdown displayed at the end of the toolbar.
  *
+ * ```
  *	┌──────────────────────────────────────── ToolbarView ──────────────────────────────────────────┐
  *	| ┌─────────────────────────────────────── #children ─────────────────────────────────────────┐ |
  *	| |   ┌─────── #itemsView ────────┐ ┌──────────────────────┐ ┌── #groupedItemsDropdown ───┐   | |
  *	| |   |       #ungroupedItems     | | ToolbarSeparatorView | |        #groupedItems       |   | |
  *	| |   └──────────────────────────-┘ └──────────────────────┘ └────────────────────────────┘   | |
- *	| |                                  \---------- only when toolbar items overflow --------/    | |
+ *	| |                                  \---------- only when toolbar items overflow -------/    | |
  *	| └───────────────────────────────────────────────────────────────────────────────────────────┘ |
  *	└───────────────────────────────────────────────────────────────────────────────────────────────┘
- *
- * @private
- * @implements module:ui/toolbar/toolbarview~ToolbarBehavior
+ * ```
  */
 class DynamicGrouping implements ToolbarBehavior {
+	/**
+	 * A toolbar view this behavior belongs to.
+	 */
 	public readonly view: ToolbarView;
+
+	/**
+	 * A collection of toolbar children.
+	 */
 	public readonly viewChildren: ViewCollection;
+
+	/**
+	 * A collection of focusable toolbar elements.
+	 */
 	public readonly viewFocusables: ViewCollection;
+
+	/**
+	 * A view containing toolbar items.
+	 */
 	public readonly viewItemsView: ItemsView;
+
+	/**
+	 * Toolbar focus tracker.
+	 */
 	public readonly viewFocusTracker: FocusTracker;
+
+	/**
+	 * Toolbar locale.
+	 */
 	public readonly viewLocale: Locale;
+
+	/**
+	 * A subset of toolbar {@link module:ui/toolbar/toolbarview~ToolbarView#items}.
+	 * Aggregates items that fit into a single row of the toolbar and were not {@link #groupedItems grouped}
+	 * into a {@link #groupedItemsDropdown dropdown}. Items of this collection are displayed in the
+	 * {@link module:ui/toolbar/toolbarview~ToolbarView#itemsView}.
+	 *
+	 * When none of the {@link module:ui/toolbar/toolbarview~ToolbarView#items} were grouped, it
+	 * matches the {@link module:ui/toolbar/toolbarview~ToolbarView#items} collection in size and order.
+	 */
 	public readonly ungroupedItems: ViewCollection;
+
+	/**
+	 * A subset of toolbar {@link module:ui/toolbar/toolbarview~ToolbarView#items}.
+	 * A collection of the toolbar items that do not fit into a single row of the toolbar.
+	 * Grouped items are displayed in a dedicated {@link #groupedItemsDropdown dropdown}.
+	 *
+	 * When none of the {@link module:ui/toolbar/toolbarview~ToolbarView#items} were grouped,
+	 * this collection is empty.
+	 */
 	public readonly groupedItems: ViewCollection;
+
+	/**
+	 * The dropdown that aggregates {@link #groupedItems grouped items} that do not fit into a single
+	 * row of the toolbar. It is displayed on demand as the last of
+	 * {@link module:ui/toolbar/toolbarview~ToolbarView#children toolbar children} and offers another
+	 * (nested) toolbar which displays items that would normally overflow.
+	 */
 	public readonly groupedItemsDropdown: DropdownView;
-	public resizeObserver: ResizeObserver | null;
-	public cachedPadding: number | null;
-	public shouldUpdateGroupingOnNextResize: boolean;
+
+	/**
+	 * An instance of the resize observer that helps dynamically determine the geometry of the toolbar
+	 * and manage items that do not fit into a single row.
+	 *
+	 * **Note:** Created in {@link #_enableGroupingOnResize}.
+	 *
+	 * @readonly
+	 */
+	public resizeObserver: ResizeObserver | null = null;
+
+	/**
+	 * A cached value of the horizontal padding style used by {@link #_updateGrouping}
+	 * to manage the {@link module:ui/toolbar/toolbarview~ToolbarView#items} that do not fit into
+	 * a single toolbar line. This value can be reused between updates because it is unlikely that
+	 * the padding will change and re–using `Window.getComputedStyle()` is expensive.
+	 *
+	 * @readonly
+	 */
+	public cachedPadding: number | null = null;
+
+	/**
+	 * A flag indicating that an items grouping update has been queued (e.g. due to the toolbar being visible)
+	 * and should be executed immediately the next time the toolbar shows up.
+	 *
+	 * @readonly
+	 */
+	public shouldUpdateGroupingOnNextResize: boolean = false;
+
+	/**
+	 * Toolbar element.
+	 *
+	 * @readonly
+	 */
 	public viewElement: HTMLElement | null | undefined;
 
 	/**
 	 * Creates an instance of the {@link module:ui/toolbar/toolbarview~DynamicGrouping} toolbar
 	 * behavior.
 	 *
-	 * @param {module:ui/toolbar/toolbarview~ToolbarView} view An instance of the toolbar that this behavior
-	 * is added to.
+	 * @param view An instance of the toolbar that this behavior is added to.
 	 */
 	constructor( view: ToolbarView ) {
-		/**
-		 * A toolbar view this behavior belongs to.
-		 *
-		 * @readonly
-		 * @member {module:ui/toolbar~ToolbarView}
-		 */
 		this.view = view;
 
-		/**
-		 * A collection of toolbar children.
-		 *
-		 * @readonly
-		 * @member {module:ui/viewcollection~ViewCollection}
-		 */
 		this.viewChildren = view.children;
-
-		/**
-		 * A collection of focusable toolbar elements.
-		 *
-		 * @readonly
-		 * @member {module:ui/viewcollection~ViewCollection}
-		 */
 		this.viewFocusables = view.focusables;
-
-		/**
-		 * A view containing toolbar items.
-		 *
-		 * @readonly
-		 * @member {module:ui/toolbar/toolbarview~ItemsView}
-		 */
 		this.viewItemsView = view.itemsView;
-
-		/**
-		 * Toolbar focus tracker.
-		 *
-		 * @readonly
-		 * @member {module:utils/focustracker~FocusTracker}
-		 */
 		this.viewFocusTracker = view.focusTracker;
-
-		/**
-		 * Toolbar locale.
-		 *
-		 * @readonly
-		 * @member {module:utils/locale~Locale}
-		 */
 		this.viewLocale = view.locale;
 
-		/**
-		 * Toolbar element.
-		 *
-		 * @readonly
-		 * @member {HTMLElement} #viewElement
-		 */
-
-		/**
-		 * A subset of toolbar {@link module:ui/toolbar/toolbarview~ToolbarView#items}.
-		 * Aggregates items that fit into a single row of the toolbar and were not {@link #groupedItems grouped}
-		 * into a {@link #groupedItemsDropdown dropdown}. Items of this collection are displayed in the
-		 * {@link module:ui/toolbar/toolbarview~ToolbarView#itemsView}.
-		 *
-		 * When none of the {@link module:ui/toolbar/toolbarview~ToolbarView#items} were grouped, it
-		 * matches the {@link module:ui/toolbar/toolbarview~ToolbarView#items} collection in size and order.
-		 *
-		 * @readonly
-		 * @member {module:ui/viewcollection~ViewCollection}
-		 */
 		this.ungroupedItems = view.createCollection();
-
-		/**
-		 * A subset of toolbar {@link module:ui/toolbar/toolbarview~ToolbarView#items}.
-		 * A collection of the toolbar items that do not fit into a single row of the toolbar.
-		 * Grouped items are displayed in a dedicated {@link #groupedItemsDropdown dropdown}.
-		 *
-		 * When none of the {@link module:ui/toolbar/toolbarview~ToolbarView#items} were grouped,
-		 * this collection is empty.
-		 *
-		 * @readonly
-		 * @member {module:ui/viewcollection~ViewCollection}
-		 */
 		this.groupedItems = view.createCollection();
-
-		/**
-		 * The dropdown that aggregates {@link #groupedItems grouped items} that do not fit into a single
-		 * row of the toolbar. It is displayed on demand as the last of
-		 * {@link module:ui/toolbar/toolbarview~ToolbarView#children toolbar children} and offers another
-		 * (nested) toolbar which displays items that would normally overflow.
-		 *
-		 * @readonly
-		 * @member {module:ui/dropdown/dropdownview~DropdownView}
-		 */
 		this.groupedItemsDropdown = this._createGroupedItemsDropdown();
-
-		/**
-		 * An instance of the resize observer that helps dynamically determine the geometry of the toolbar
-		 * and manage items that do not fit into a single row.
-		 *
-		 * **Note:** Created in {@link #_enableGroupingOnResize}.
-		 *
-		 * @readonly
-		 * @member {module:utils/dom/resizeobserver~ResizeObserver}
-		 */
-		this.resizeObserver = null;
-
-		/**
-		 * A cached value of the horizontal padding style used by {@link #_updateGrouping}
-		 * to manage the {@link module:ui/toolbar/toolbarview~ToolbarView#items} that do not fit into
-		 * a single toolbar line. This value can be reused between updates because it is unlikely that
-		 * the padding will change and re–using `Window.getComputedStyle()` is expensive.
-		 *
-		 * @readonly
-		 * @member {Number}
-		 */
-		this.cachedPadding = null;
-
-		/**
-		 * A flag indicating that an items grouping update has been queued (e.g. due to the toolbar being visible)
-		 * and should be executed immediately the next time the toolbar shows up.
-		 *
-		 * @readonly
-		 * @member {Boolean}
-		 */
-		this.shouldUpdateGroupingOnNextResize = false;
 
 		// Only those items that were not grouped are visible to the user.
 		view.itemsView.children.bindTo( this.ungroupedItems ).using( item => item );
 
 		// Make sure all #items visible in the main space of the toolbar are "focuscycleable".
-		this.ungroupedItems.on<CollectionAddEvent>( 'add', this._updateFocusCycleableItems.bind( this ) );
-		this.ungroupedItems.on<CollectionRemoveEvent>( 'remove', this._updateFocusCycleableItems.bind( this ) );
+		this.ungroupedItems.on<CollectionChangeEvent>( 'change', this._updateFocusCycleableItems.bind( this ) );
 
 		// Make sure the #groupedItemsDropdown is also included in cycling when it appears.
-		view.children.on<CollectionAddEvent>( 'add', this._updateFocusCycleableItems.bind( this ) );
-		view.children.on<CollectionRemoveEvent>( 'remove', this._updateFocusCycleableItems.bind( this ) );
+		view.children.on<CollectionChangeEvent>( 'change', this._updateFocusCycleableItems.bind( this ) );
 
 		// ToolbarView#items is dynamic. When an item is added or removed, it should be automatically
 		// represented in either grouped or ungrouped items at the right index.
@@ -885,8 +833,7 @@ class DynamicGrouping implements ToolbarBehavior {
 	/**
 	 * Enables dynamic items grouping based on the dimensions of the toolbar.
 	 *
-	 * @param {module:ui/toolbar/toolbarview~ToolbarView} view An instance of the toolbar that this behavior
-	 * is added to.
+	 * @param view An instance of the toolbar that this behavior is added to.
 	 */
 	public render( view: ToolbarView ): void {
 		this.viewElement = view.element;
@@ -913,8 +860,6 @@ class DynamicGrouping implements ToolbarBehavior {
 	 * At the same time, it will also check if there is enough space in the toolbar for the first of the
 	 * {@link #groupedItems} to be returned back to {@link #ungroupedItems} and still fit into a single row
 	 * without the toolbar wrapping.
-	 *
-	 * @protected
 	 */
 	private _updateGrouping() {
 		// Do no grouping–related geometry analysis when the toolbar is detached from visible DOM,
@@ -977,9 +922,6 @@ class DynamicGrouping implements ToolbarBehavior {
 	/**
 	 * Returns `true` when {@link module:ui/toolbar/toolbarview~ToolbarView#element} children visually overflow,
 	 * for instance if the toolbar is narrower than its members. Returns `false` otherwise.
-	 *
-	 * @private
-	 * @type {Boolean}
 	 */
 	private get _areItemsOverflowing() {
 		// An empty toolbar cannot overflow.
@@ -1018,8 +960,6 @@ class DynamicGrouping implements ToolbarBehavior {
 	 * them in the dropdown if necessary. It will also observe the browser window for size changes in
 	 * the future and respond to them by grouping more items or reverting already grouped back, depending
 	 * on the visual space available.
-	 *
-	 * @private
 	 */
 	private _enableGroupingOnResize() {
 		let previousWidth: number | undefined;
@@ -1041,8 +981,6 @@ class DynamicGrouping implements ToolbarBehavior {
 	/**
 	 * Enables the grouping functionality, just like {@link #_enableGroupingOnResize} but the difference is that
 	 * it listens to the changes of {@link module:ui/toolbar/toolbarview~ToolbarView#maxWidth} instead.
-	 *
-	 * @private
 	 */
 	private _enableGroupingOnMaxWidthChange( view: View ) {
 		view.on<ObservableChangeEvent>( 'change:maxWidth', () => {
@@ -1055,8 +993,6 @@ class DynamicGrouping implements ToolbarBehavior {
 	 * to the {@link #groupedItems} collection.
 	 *
 	 * The opposite of {@link #_ungroupFirstItem}.
-	 *
-	 * @private
 	 */
 	private _groupLastItem() {
 		if ( !this.groupedItems.length ) {
@@ -1073,8 +1009,6 @@ class DynamicGrouping implements ToolbarBehavior {
 	 * to the {@link #ungroupedItems} collection.
 	 *
 	 * The opposite of {@link #_groupLastItem}.
-	 *
-	 * @private
 	 */
 	private _ungroupFirstItem() {
 		this.ungroupedItems.add( this.groupedItems.remove( this.groupedItems.first! ) );
@@ -1089,9 +1023,6 @@ class DynamicGrouping implements ToolbarBehavior {
 	/**
 	 * Creates the {@link #groupedItemsDropdown} that hosts the members of the {@link #groupedItems}
 	 * collection when there is not enough space in the toolbar to display all items in a single row.
-	 *
-	 * @private
-	 * @returns {module:ui/dropdown/dropdownview~DropdownView}
 	 */
 	private _createGroupedItemsDropdown() {
 		const locale = this.viewLocale;
@@ -1104,7 +1035,7 @@ class DynamicGrouping implements ToolbarBehavior {
 		// (https://github.com/ckeditor/ckeditor5/issues/5608)
 		dropdown.panelPosition = locale.uiLanguageDirection === 'ltr' ? 'sw' : 'se';
 
-		addToolbarToDropdown( dropdown, [] );
+		addToolbarToDropdown( dropdown, this.groupedItems );
 
 		dropdown.buttonView.set( {
 			label: t( 'Show more items' ),
@@ -1112,9 +1043,6 @@ class DynamicGrouping implements ToolbarBehavior {
 			tooltipPosition: locale.uiLanguageDirection === 'rtl' ? 'se' : 'sw',
 			icon: threeVerticalDots
 		} );
-
-		// 1:1 pass–through binding.
-		dropdown.toolbarView!.items.bindTo( this.groupedItems ).using( item => item );
 
 		return dropdown;
 	}
@@ -1128,8 +1056,6 @@ class DynamicGrouping implements ToolbarBehavior {
 	 *
 	 * See the {@link module:ui/toolbar/toolbarview~ToolbarView#focusables collection} documentation
 	 * to learn more about the purpose of this method.
-	 *
-	 * @private
 	 */
 	private _updateFocusCycleableItems() {
 		this.viewFocusables.clear();
@@ -1146,34 +1072,28 @@ class DynamicGrouping implements ToolbarBehavior {
 
 /**
  * Options passed to the {@link module:ui/toolbar/toolbarview~ToolbarView#constructor} of the toolbar.
- *
- * @interface module:ui/toolbar/toolbarview~ToolbarOptions
  */
 export interface ToolbarOptions {
+
+	/**
+	 * When set to `true`, the toolbar will automatically group {@link module:ui/toolbar/toolbarview~ToolbarView#items} that
+	 * would normally wrap to the next line when there is not enough space to display them in a single row, for
+	 * instance, if the parent container of the toolbar is narrow. For toolbars in absolutely positioned containers
+	 * without width restrictions also the {@link module:ui/toolbar/toolbarview~ToolbarOptions#isFloating} option is required to be `true`.
+	 *
+	 * See also: {@link module:ui/toolbar/toolbarview~ToolbarView#maxWidth}.
+	 */
 	shouldGroupWhenFull?: boolean;
+
+	/**
+	 * This option should be enabled for toolbars in absolutely positioned containers without width restrictions
+	 * to enable automatic {@link module:ui/toolbar/toolbarview~ToolbarView#items} grouping.
+	 * When this option is set to `true`, the items will stop wrapping to the next line
+	 * and together with {@link module:ui/toolbar/toolbarview~ToolbarOptions#shouldGroupWhenFull},
+	 * this will allow grouping them when there is not enough space in a single row.
+	 */
 	isFloating?: boolean;
 }
-
-/**
- * When set to `true`, the toolbar will automatically group {@link module:ui/toolbar/toolbarview~ToolbarView#items} that
- * would normally wrap to the next line when there is not enough space to display them in a single row, for
- * instance, if the parent container of the toolbar is narrow. For toolbars in absolutely positioned containers
- * without width restrictions also the {@link module:ui/toolbar/toolbarview~ToolbarOptions#isFloating} option is required to be `true`.
- *
- * See also: {@link module:ui/toolbar/toolbarview~ToolbarView#maxWidth}.
- *
- * @member {Boolean} module:ui/toolbar/toolbarview~ToolbarOptions#shouldGroupWhenFull
- */
-
-/**
- * This option should be enabled for toolbars in absolutely positioned containers without width restrictions
- * to enable automatic {@link module:ui/toolbar/toolbarview~ToolbarView#items} grouping.
- * When this option is set to `true`, the items will stop wrapping to the next line
- * and together with {@link module:ui/toolbar/toolbarview~ToolbarOptions#shouldGroupWhenFull},
- * this will allow grouping them when there is not enough space in a single row.
- *
- * @member {Boolean} module:ui/toolbar/toolbarview~ToolbarOptions#isFloating
- */
 
 /**
  * A class interface defining the behavior of the {@link module:ui/toolbar/toolbarview~ToolbarView}.
@@ -1182,41 +1102,22 @@ export interface ToolbarOptions {
  * {@link module:ui/toolbar/toolbarview~ToolbarView#element} template or
  * {@link module:ui/toolbar/toolbarview~ToolbarView#render rendering}. They can be enabled
  * conditionally, e.g. depending on the configuration of the toolbar.
- *
- * @private
- * @interface module:ui/toolbar/toolbarview~ToolbarBehavior
  */
-interface ToolbarBehavior {
+export interface ToolbarBehavior {
+
+	/**
+	 * A method called after the toolbar has been {@link module:ui/toolbar/toolbarview~ToolbarView#render rendered}.
+	 * It can be used to, for example, customize the behavior of the toolbar when its
+	 * {@link module:ui/toolbar/toolbarview~ToolbarView#element} is available.
+	 *
+	 * @param view An instance of the toolbar being rendered.
+	 */
 	render( view: ToolbarView ): void;
+
+	/**
+	 * A method called after the toolbar has been {@link module:ui/toolbar/toolbarview~ToolbarView#destroy destroyed}.
+	 * It allows cleaning up after the toolbar behavior, for instance, this is the right place to detach
+	 * event listeners, free up references, etc.
+	 */
 	destroy(): void;
 }
-
-/**
- * Creates a new toolbar behavior instance.
- *
- * The instance is created in the {@link module:ui/toolbar/toolbarview~ToolbarView#constructor} of the toolbar.
- * This is the right place to extend the {@link module:ui/toolbar/toolbarview~ToolbarView#template} of
- * the toolbar, define extra toolbar properties, etc.
- *
- * @method #constructor
- * @param {module:ui/toolbar/toolbarview~ToolbarView} view An instance of the toolbar that this behavior is added to.
- */
-
-/**
- * A method called after the toolbar has been {@link module:ui/toolbar/toolbarview~ToolbarView#render rendered}.
- * It can be used to, for example, customize the behavior of the toolbar when its {@link module:ui/toolbar/toolbarview~ToolbarView#element}
- * is available.
- *
- * @readonly
- * @member {Function} #render
- * @param {module:ui/toolbar/toolbarview~ToolbarView} view An instance of the toolbar being rendered.
- */
-
-/**
- * A method called after the toolbar has been {@link module:ui/toolbar/toolbarview~ToolbarView#destroy destroyed}.
- * It allows cleaning up after the toolbar behavior, for instance, this is the right place to detach
- * event listeners, free up references, etc.
- *
- * @readonly
- * @member {Function} #destroy
- */

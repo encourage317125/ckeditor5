@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -175,6 +175,17 @@ describe( 'CharacterGridView', () => {
 
 			view.on( 'tileHover', spy );
 			tile.fire( 'mouseover' );
+
+			sinon.assert.calledOnce( spy );
+			sinon.assert.calledWithExactly( spy, sinon.match.any, { name: 'foo bar baz', character: 'ε' } );
+		} );
+
+		it( 'delegates #tileFocus from the tile to the grid on focus the tile', () => {
+			const tile = view.createTile( 'ε', 'foo bar baz' );
+			const spy = sinon.spy();
+
+			view.on( 'tileFocus', spy );
+			tile.fire( 'focus' );
 
 			sinon.assert.calledOnce( spy );
 			sinon.assert.calledWithExactly( spy, sinon.match.any, { name: 'foo bar baz', character: 'ε' } );

@@ -6,13 +6,7 @@ menu-title: Block quote
 
 # Block quote
 
-The block quote feature allows you to easily include block quotations or pull quotes in the rich-text content. A block quote may be used to refer to what other authors said, support your idea or present different points of view that may not necessarily be in line with the document you write, but should be included.
-
-The block quote feature provides an attractive way to draw the readers' attention to selected parts of text and enriches the reading experience with additional data. It also helps organize the content in a structured, elegant way to manage the flow better.
-
-<info-box info>
-	This feature is enabled by default in all {@link installation/getting-started/predefined-builds predefined builds}.
-</info-box>
+The block quote feature lets you easily include block quotations or pull quotes in your content. It's also an attractive way to draw the readers' attention to selected parts of the text.
 
 ## Demo
 
@@ -36,19 +30,10 @@ Support for nested block quotes is provided as backward compatibility for loadin
 	If you would want to block the possibility to nest block quotes in your editor, refer to the {@link features/block-quote#disallow-nesting-block-quotes Disallow nesting block quotes} section to learn how to disable this functionality.
 </info-box>
 
-## Related features
-
-Here are some other CKEditor 5 features that you can use similarly to the block quote plugin to structure your text better:
-
-* {@link features/indent Block indentation}  &ndash; Set indentation for text blocks such as paragraphs or lists.
-* {@link features/code-blocks Code block}  &ndash; Insert longer, multiline code listings.
-* {@link features/text-alignment Text alignment} &ndash; Align your content left, right, center it or justify.
-* {@link features/autoformat Autoformatting} &ndash; Add formatting elements (such as block quotes) as you type with Markdown code.
-
 ## Installation
 
 <info-box info>
-	This feature is enabled by default in all predefined builds. The installation instructions are for developers interested in building their own, custom editor.
+	This feature is enabled by default in all {@link installation/getting-started/predefined-builds predefined builds}. The installation instructions are for developers interested in building their own, custom editor.
 </info-box>
 
 To add this feature to your rich-text editor, install the [`@ckeditor/ckeditor5-block-quote`](https://www.npmjs.com/package/@ckeditor/ckeditor5-block-quote) package:
@@ -64,15 +49,15 @@ import BlockQuote from '@ckeditor/ckeditor5-block-quote/src/blockquote';
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ BlockQuote, ... ],
-		toolbar: [ 'blockQuote', ... ]
+		plugins: [ BlockQuote, /* ... */ ],
+		toolbar: [ 'blockQuote', /* ... */ ]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box info>
-	Read more about {@link installation/getting-started/installing-plugins installing plugins}.
+	Read more about {@link installation/plugins/installing-plugins installing plugins}.
 </info-box>
 
 ## Configuration
@@ -81,7 +66,7 @@ ClassicEditor
 
 By default, the editor supports inserting a block quote into another block quote.
 
-In order to disallow nesting block quotes, you need to register an additional schema rule. It needs to be added before the data is loaded into the editor, hence it is best to implement it as a plugin:
+To disallow nesting block quotes, you need to register an additional schema rule. It needs to be added before the data is loaded into the editor, hence it is best to implement it as a plugin:
 
 ```js
 function DisallowNestingBlockQuotes( editor ) {
@@ -99,14 +84,24 @@ ClassicEditor
 		extraPlugins: [ DisallowNestingBlockQuotes ],
 
 		// The rest of the configuration.
+		// ...
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box>
-	Check the {@link framework/guides/creating-simple-plugin-timestamp plugin development guide} if you need more information about the technical side of this solution.
+	Check the {@link framework/creating-simple-plugin-timestamp plugin development guide} if you need more information about the technical side of this solution.
 </info-box>
+
+## Related features
+
+Here are some other CKEditor 5 features that you can use similarly to the block quote plugin to structure your text better:
+
+* {@link features/indent Block indentation} &ndash; Set indentation for text blocks such as paragraphs or lists.
+* {@link features/code-blocks Code block} &ndash; Insert longer, multiline code listings.
+* {@link features/text-alignment Text alignment} &ndash; Align your content left, right, center it, or justify.
+* {@link features/autoformat Autoformatting} &ndash; Add formatting elements (such as block quotes) as you type with Markdown code.
 
 ## Common API
 
@@ -123,9 +118,9 @@ editor.execute( 'blockQuote' );
 ```
 
 <info-box>
-	We recommend using the official {@link framework/guides/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
 
 ## Contribute
 
-The source code of the feature is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-block-quote.
+The source code of the feature is available on GitHub at [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-block-quote](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-block-quote).

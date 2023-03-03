@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -40,7 +40,7 @@ import mix from '@ckeditor/ckeditor5-utils/src/mix';
  * The third parameter of the callback is an instance of {@link module:engine/conversion/upcastdispatcher~UpcastConversionApi}
  * which provides additional tools for converters.
  *
- * You can read more about conversion in the {@glink framework/guides/deep-dive/conversion/upcast Upcast conversion} guide.
+ * You can read more about conversion in the {@glink framework/deep-dive/conversion/upcast Upcast conversion} guide.
  *
  * Examples of event-based converters:
  *

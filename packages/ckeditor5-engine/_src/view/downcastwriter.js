@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -34,8 +34,8 @@ import { isPlainObject } from 'lodash-es';
  * To work with ordinary views (e.g. parsed from a pasted content) use the
  * {@link module:engine/view/upcastwriter~UpcastWriter upcast writer}.
  *
- * Read more about changing the view in the {@glink framework/guides/architecture/editing-engine#changing-the-view Changing the view}
- * section of the {@glink framework/guides/architecture/editing-engine Editing engine architecture} guide.
+ * Read more about changing the view in the {@glink framework/architecture/editing-engine#changing-the-view Changing the view}
+ * section of the {@glink framework/architecture/editing-engine Editing engine architecture} guide.
  */
 export default class DowncastWriter {
 	/**

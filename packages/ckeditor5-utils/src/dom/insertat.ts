@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -10,9 +10,9 @@
 /**
  * Inserts node to the parent at given index.
  *
- * @param {Element} parentElement Parent element.
- * @param {Number} index Insertions index.
- * @param {Node} nodeToInsert Node to insert.
+ * @param parentElement Parent element.
+ * @param index Insertions index.
+ * @param nodeToInsert Node to insert.
  */
 export default function insertAt(
 	parentElement: Element,

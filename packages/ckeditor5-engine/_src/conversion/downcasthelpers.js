@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -25,7 +25,7 @@ import toArray from '@ckeditor/ckeditor5-utils/src/toarray';
 /**
  * Downcast conversion helper functions.
  *
- * Learn more about {@glink framework/guides/deep-dive/conversion/downcast downcast helpers}.
+ * Learn more about {@glink framework/deep-dive/conversion/downcast downcast helpers}.
  *
  * @extends module:engine/conversion/conversionhelpers~ConversionHelpers
  */
@@ -142,7 +142,7 @@ export default class DowncastHelpers extends ConversionHelpers {
 	 * to the conversion process.
 	 *
 	 * You can read more about the element-to-element conversion in the
-	 * {@glink framework/guides/deep-dive/conversion/downcast downcast conversion} guide.
+	 * {@glink framework/deep-dive/conversion/downcast downcast conversion} guide.
 	 *
 	 * @method #elementToElement
 	 * @param {Object} config Conversion configuration.
@@ -1712,7 +1712,7 @@ function downcastElementToStructure( config ) {
 			 * allowed to host `$text` by the {@link module:engine/model/schema~Schema model schema}.
 			 *
 			 * For instance, this may be the result of `myElement` allowing the content of
-			 * {@glink framework/guides/deep-dive/schema#generic-items `$block`} in its schema definition:
+			 * {@glink framework/deep-dive/schema#generic-items `$block`} in its schema definition:
 			 *
 			 *		// Element definition in schema.
 			 *		schema.register( 'myElement', {

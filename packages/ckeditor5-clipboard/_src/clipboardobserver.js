@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -111,7 +111,7 @@ function getDropViewRange( view, domEvent ) {
 /**
  * Fired as a continuation of the {@link #event:paste} and {@link #event:drop} events.
  *
- * It is a part of the {@glink framework/guides/deep-dive/clipboard#input-pipeline clipboard input pipeline}.
+ * It is a part of the {@glink framework/deep-dive/clipboard#input-pipeline clipboard input pipeline}.
  *
  * This event carries a `dataTransfer` object which comes from the clipboard and whose content should be processed
  * and inserted into the editor.
@@ -230,7 +230,7 @@ function getDropViewRange( view, domEvent ) {
 /**
  * Fired as a continuation of the {@link #event:dragover} event.
  *
- * It is a part of the {@glink framework/guides/deep-dive/clipboard#input-pipeline clipboard input pipeline}.
+ * It is a part of the {@glink framework/deep-dive/clipboard#input-pipeline clipboard input pipeline}.
  *
  * This event carries a `dataTransfer` object which comes from the clipboard and whose content should be processed
  * and inserted into the editor.

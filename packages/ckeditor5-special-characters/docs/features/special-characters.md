@@ -5,11 +5,7 @@ menu-title: Special characters
 
 # Special characters
 
-The special characters feature provides the ability to insert special characters into the rich-text editor. These would typically include characters and signs that serve a specific purpose, like mathematical operators, currency symbols, punctuation, graphic symbols (e.g. arrows or bullets). The feature may be used to provide fast access to a broader selection of Unicode letters typically not accessible from the keyboard, like umlauts or other diacritics. It also provides support for emojis.
-
-<info-box info>
-	The Special characters feature is enabled by default in the {@link installation/getting-started/predefined-builds#superbuild superbuild} only. See the [installation](#installation) section to learn how to enable it in your editor.
-</info-box>
+The special characters feature lets you insert **mathematical operators**, **currency symbols**, **punctuation**, **graphic symbols** (such as arrows or bullets), or Unicode letters typically not accessible from the keyboard (such as **umlauts** or **other diacritics**). The feature also supports **emojis**.
 
 ## Demo
 
@@ -25,7 +21,7 @@ Use the toolbar button {@icon @ckeditor/ckeditor5-special-characters/theme/icons
 
 ## Configuration
 
-By default, a few categories of special characters have been defined. You can easily customize the special characters available in your WYSIWYG editor installation by adding new categories, extending the existing ones or removing them altogether.
+By default, a few categories of special characters have been defined. You can easily customize the special characters available in your WYSIWYG editor installation by adding new categories, extending the existing ones, or removing them altogether.
 
 ### Adding a new category
 
@@ -44,20 +40,20 @@ function SpecialCharactersEmoji( editor ) {
 		{ title: 'wind blowing face', character: '🌬️' },
 		{ title: 'floppy disk', character: '💾' },
 		{ title: 'heart', character: '❤️' }
-	] );
+	], { label: 'Emoticons' } );
 }
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
 		plugins: [
 			SpecialCharacters, SpecialCharactersEssentials, SpecialCharactersEmoji,
-
-			// Other plugins...
+			// More plugins.
+			// ...
 		],
-		toolbar: [ 'specialCharacters', ... ],
+		toolbar: [ 'specialCharacters', /* ... */ ],
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 After adding the above plugin to the editor configuration, the new category will become available in the special characters dropdown.
@@ -66,13 +62,17 @@ After adding the above plugin to the editor configuration, the new category will
 	The title of a special character must be unique across the entire special characters set.
 </info-box>
 
+<info-box>
+	The third argument of the {@link module:special-characters/specialcharacters~SpecialCharacters#addItems `SpecialCharacters#addItems()`} method is optional. You can use it to specify a label displayed as a category name. It is useful when your editor uses a language other than English. Check out the {@link features/ui-language UI language guide} to learn more.
+</info-box>
+
 Below you can see a demo based on the example shown above. Use the special characters icon in the editor toolbar and then select "Emoji" in the select dropdown in order to insert an emoji into the WYSIWYG editor.
 
 {@snippet features/special-characters-new-category}
 
 ### Adding characters to an existing category
 
-By using the {@link module:special-characters/specialcharacters~SpecialCharacters#addItems `SpecialCharacters#addItems()`} function you can also add new special characters into an existing category.
+By using the {@link module:special-characters/specialcharacters~SpecialCharacters#addItems `SpecialCharacters#addItems()`} function you can also add new special characters to an existing category.
 
 ```js
 import SpecialCharacters from '@ckeditor/ckeditor5-special-characters/src/specialcharacters';
@@ -91,12 +91,13 @@ ClassicEditor
 		plugins: [
 			SpecialCharacters, SpecialCharactersEssentials, SpecialCharactersExtended,
 
-			// Other plugins...
+			// More plugins.
+			// ...
 		],
-		toolbar: [ 'specialCharacters', ... ],
+		toolbar: [ 'specialCharacters', /* ... */ ],
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box>
@@ -132,19 +133,48 @@ ClassicEditor
 		plugins: [
 			SpecialCharacters, SpecialCharactersCurrency, SpecialCharactersMathematical,
 
-			// Other plugins...
+			// More plugins.
+			// ...
 		],
-		toolbar: [ 'specialCharacters', ... ],
+		toolbar: [ 'specialCharacters', /* ... */ ],
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 Below, you can see a demo based on the example shown above. After clicking the special character icon in the editor toolbar you can see that it contains fewer categories compared to other editors on this page.
 
 {@snippet features/special-characters-limited-categories}
 
+### Ordering categories
+
+The order of categories in the UI is determined by the order in which they were registered. However, depending on the context in which you use the editor, you might want to change this order, to make it easier to access frequently used characters.
+
+The categories order can be customized using the {@link module:special-characters/specialcharacters~SpecialCharactersConfig#order `order`} array.
+
+```js
+ClassicEditor
+	.create( document.querySelector( '#editor' ), {
+		plugins: [ SpecialCharacters, SpecialCharactersEssentials, ... ],
+		specialCharacters: {
+			order: [
+				'Text',
+				'Latin',
+				'Mathematical',
+				'Currency',
+				'Arrows'
+			]
+		}
+	} )
+	.then( ... )
+	.catch( ... );
+```
+
 ## Installation
+
+<info-box info>
+	The special characters feature is enabled by default in the {@link installation/getting-started/predefined-builds#superbuild superbuild} only.
+</info-box>
 
 To add this feature to your rich-text editor, install the [`@ckeditor/ckeditor5-special-characters`](https://www.npmjs.com/package/@ckeditor/ckeditor5-special-characters) package:
 
@@ -162,15 +192,15 @@ import SpecialCharactersEssentials from '@ckeditor/ckeditor5-special-characters/
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ SpecialCharacters, SpecialCharactersEssentials, ... ],
-		toolbar: [ 'specialCharacters', ... ],
+		plugins: [ SpecialCharacters, SpecialCharactersEssentials, /* ... */ ],
+		toolbar: [ 'specialCharacters', /* ... */ ],
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box info>
-	Read more about {@link installation/getting-started/installing-plugins installing plugins}.
+	Read more about {@link installation/plugins/installing-plugins installing plugins}.
 </info-box>
 
 ## Common API
@@ -178,9 +208,9 @@ ClassicEditor
 The {@link module:special-characters/specialcharacters~SpecialCharacters} plugin registers the UI button component (`'specialCharacters'`).
 
 <info-box>
-	We recommend using the official {@link framework/guides/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
 
 ## Contribute
 
-The source code of the feature is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-special-characters.
+The source code of the feature is available at GitHub in [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-special-characters](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-special-characters).

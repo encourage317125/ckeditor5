@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -370,6 +370,29 @@ describe( 'ListStartCommand', () => {
 				'<listItem listIndent="0" listStart="7" listType="numbered">3.</listItem>' +
 				'<listItem listIndent="1" listStart="4" listType="numbered">3.1.</listItem>' +
 				'<listItem listIndent="2" listStart="5" listType="numbered">3.1.1.</listItem>'
+			);
+		} );
+
+		it( 'should allow 0 as start index', () => {
+			setData( model,
+				'<listItem listIndent="0" listStart="1" listType="numbered">1.[]</listItem>'
+			);
+
+			listStartCommand.execute( { startIndex: 0 } );
+
+			expect( getData( model ) ).to.equal(
+				'<listItem listIndent="0" listStart="0" listType="numbered">1.[]</listItem>'
+			);
+		} );
+
+		it( 'should set start index to 1 if attempted to set a negative number', () => {
+			setData( model,
+				'<listItem listIndent="0" listStart="3" listType="numbered">1.[]</listItem>'
+			);
+			listStartCommand.execute( { startIndex: -2 } );
+
+			expect( getData( model ) ).to.equal(
+				'<listItem listIndent="0" listStart="1" listType="numbered">1.[]</listItem>'
 			);
 		} );
 	} );

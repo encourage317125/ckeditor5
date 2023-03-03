@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -15,8 +15,8 @@
  * appended to a `Document`, that `Document` will not be returned (algorithms operating on DOM tree care for `Document#documentElement`
  * at most, which will be returned).
  *
- * @param {Node} node DOM node.
- * @returns {Array.<Node|DocumentFragment>} Array of given `node` parents.
+ * @param node DOM node.
+ * @returns Array of given `node` parents.
  */
 export default function getAncestors( node: Node ): Array<Node> {
 	const nodes: Array<Node> = [];

@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -14,9 +14,6 @@
 export default class ElementReplacer {
 	/**
 	 * The elements replaced by {@link #replace} and their replacements.
-	 *
-	 * @private
-	 * @member {Array.<Object>}
 	 */
 	private _replacedElements: Array<{ element: HTMLElement; newElement?: HTMLElement }>;
 
@@ -29,8 +26,8 @@ export default class ElementReplacer {
 	 *
 	 * The effect of this method can be reverted by {@link #restore}.
 	 *
-	 * @param {HTMLElement} element The element to replace.
-	 * @param {HTMLElement} [newElement] The replacement element. If not passed, then the `element` will just be hidden.
+	 * @param element The element to replace.
+	 * @param newElement The replacement element. If not passed, then the `element` will just be hidden.
 	 */
 	public replace( element: HTMLElement, newElement?: HTMLElement ): void {
 		this._replacedElements.push( { element, newElement } );

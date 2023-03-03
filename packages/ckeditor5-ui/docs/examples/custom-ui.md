@@ -7,7 +7,7 @@ classes: main__content--no-toc
 
 # Custom UI (with Bootstrap)
 
-The editor below runs a completely custom user interface written in [Bootstrap](http://getbootstrap.com/), while the editing is provided by CKEditor 5. To learn more, check out the {@link framework/guides/external-ui detailed guide} on how to integrate an external UI with the editor.
+The editor below runs a completely custom user interface written in [Bootstrap](http://getbootstrap.com/), while the editing is provided by CKEditor 5. To learn more, check out the {@link framework/external-ui detailed guide} on how to integrate an external UI with the editor.
 
 {@snippet examples/bootstrap-ui}
 ## Editor example configuration
@@ -18,7 +18,7 @@ The editor below runs a completely custom user interface written in [Bootstrap](
 ```js
 // Basic classes to create an editor.
 import Editor from '@ckeditor/ckeditor5-core/src/editor/editor';
-import EditorUI from '@ckeditor/ckeditor5-core/src/editor/editorui';
+import EditorUI from '@ckeditor/ckeditor5-ui/src/editorui/editorui';
 import EditorUIView from '@ckeditor/ckeditor5-ui/src/editorui/editoruiview';
 import InlineEditableUIView from '@ckeditor/ckeditor5-ui/src/editableui/inline/inlineeditableuiview';
 import ElementReplacer from '@ckeditor/ckeditor5-utils/src/elementreplacer';

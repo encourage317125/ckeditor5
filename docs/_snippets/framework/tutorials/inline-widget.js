@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -224,6 +224,17 @@ ClassicEditor
 
 		// Expose for playing in the console.
 		window.editor = editor;
+
+		window.attachTourBalloon( {
+			target: window.findToolbarItem( editor.ui.view.toolbar,
+				item => item.buttonView && item.buttonView.label && item.buttonView.label.startsWith( 'Placeholder' )
+			),
+			text: 'Click to add a placeholder.',
+			tippyOptions: {
+				placement: 'bottom-start'
+			},
+			editor
+		} );
 	} )
 	.catch( error => {
 		console.error( error.stack );

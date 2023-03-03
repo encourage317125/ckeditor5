@@ -7,11 +7,7 @@ menu-title: UI language
 
 # Setting the UI language
 
-The UI of the editor can be localized. Currently, 41 of available languages are fully translated. 38 languages were translated professionally. There are also numerous other languages covered by community translators. Full list of professional translations is available in the [latter part of this document](#list-of-available-professional-translations).
-
-<info-box>
-	If you want to help translate CKEditor 5 into your native language, join the [CKEditor 5 project on Transifex](https://www.transifex.com/ckeditor/ckeditor5/). Your help will be much appreciated!
-</info-box>
+You can change the language of the editor's UI. On top of 41 fully translated languages (including [38 professional translations](#list-of-available-professional-translations)), there are many other languages covered by community translators.
 
 ## Demo
 
@@ -19,8 +15,12 @@ See the demo of the editor in Spanish:
 
 {@snippet features/ui-language}
 
+<info-box info>
+	All demos in this guide only present a limited set of features for clarity. Visit the {@link examples/builds/full-featured-editor full-featured editor example} to see more in action.
+</info-box>
+
 <info-box>
-	If you are interested in creating features that can be localized, check out the {@link framework/guides/deep-dive/localization localization guide}.
+	If you are interested in creating features that can be localized, check out the {@link framework/deep-dive/localization localization guide}.
 </info-box>
 
 ## Right–to–left (RTL) languages support
@@ -39,7 +39,7 @@ See the demo of the editor in Arabic:
 
 We are doing our best to deliver the best RTL support to our users and we constantly improve the editor. Check out the [RTL support](https://github.com/ckeditor/ckeditor5/issues/1151) issue on GitHub to learn more and stay up–to–date. Your feedback is much appreciated!
 
-## Loading additional languages from CDN, npm and zip file
+## Loading additional languages from CDN, npm, and a zip file
 
  By default, the editor will display in English. This is the language built into the `ckeditor.js` files. In order to change the language of the editor UI, you need to load additional language file(s). Check out the following sections to see how to do that:
 
@@ -102,16 +102,16 @@ See the {@link installation/getting-started/predefined-builds#zip-download zip i
 
 ## Building the editor using a specific language
 
-Currently, it is possible to change the UI language at the build stage and after the build. A single build of the editor supports the language which was defined in the [CKEditor 5 webpack plugin](https://www.npmjs.com/package/@ckeditor/ckeditor5-dev-webpack-plugin)'s configuration. Check the whole translation process to see how you can change the language later.
+Currently, it is possible to change the UI language at the build stage and after the build. A single build of the editor supports the language which was defined in the [CKEditor 5 translations plugin](https://www.npmjs.com/package/@ckeditor/ckeditor5-dev-translations)'s configuration. Check the whole translation process to see how you can change the language later.
 
 If you use one of the {@link installation/index predefined editor builds}, refer to {@link installation/getting-started/quick-start-other#building-the-editor-from-source Creating custom builds} to learn how to change the language of your build.
 
 If you build CKEditor 5 from scratch or integrate it directly into your application, then all you need to do is to:
 
-1. Install the [`@ckeditor/ckeditor5-dev-webpack-plugin`](https://www.npmjs.com/package/@ckeditor/ckeditor5-dev-webpack-plugin) package:
+1. Install the [`@ckeditor/ckeditor5-dev-translations`](https://www.npmjs.com/package/@ckeditor/ckeditor5-dev-translations) package:
 
 	```
-	npm install --save @ckeditor/ckeditor5-dev-webpack-plugin
+	npm install --save @ckeditor/ckeditor5-dev-translations
 	```
 
 2. Add it to your webpack configuration:
@@ -119,11 +119,14 @@ If you build CKEditor 5 from scratch or integrate it directly into your applicat
 	Note: The language code is defined in the [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) standard.
 
 	```js
-	const CKEditorWebpackPlugin = require( '@ckeditor/ckeditor5-dev-webpack-plugin' );
+	const { CKEditorTranslationsPlugin } = require( '@ckeditor/ckeditor5-dev-translations' );
 
-	// Define webpack plugins...
+	module.exports = {
+		// Define webpack plugins.
+		// ...
+		
 		plugins: [
-			new CKEditorWebpackPlugin( {
+			new CKEditorTranslationsPlugin( {
 				// The main language that will be built into the main bundle.
 				language: 'en',
 
@@ -132,12 +135,16 @@ If you build CKEditor 5 from scratch or integrate it directly into your applicat
 				// The bundle is optimized for one language when this option is omitted.
 				additionalLanguages: 'all',
 
-				// For more advanced options see https://github.com/ckeditor/ckeditor5-dev/tree/master/packages/ckeditor5-dev-webpack-plugin.
+				// For more advanced options see https://github.com/ckeditor/ckeditor5-dev/tree/master/packages/ckeditor5-dev-translations.
 			} ),
 
-			// Other webpack plugins...
+			// Other webpack plugins.
+			// ...
 		]
-	// ...
+
+		// Remaining webpack configuration.
+		// ...
+	}
 	```
 
 3. Run webpack. The CKEditor 5 plugin for webpack will emit additional files for each language specified in the `additionalLanguages` option. They will contain translations for messages from the {@link module:utils/locale~Locale#t `t()` function} calls. The files will be created in the `translations` directory (or another one if the `outputDirectory` option is specified). Translations from the language specified in the `language` option will be automatically included in the build.
@@ -198,149 +205,162 @@ ClassicEditor
 
 ## List of available professional translations
 
-<table style="width:800px">
+<style>
+	td {
+		text-align: center;
+		vertical-align: middle;
+	}
+	table {
+		table-layout: fixed;
+	}
+</style>
+<table>
 	<tbody>
 		<tr>
-			<td style="width:200px">
-			<p style="text-align:center">Arabic</p>
+			<td>
+			Arabic
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Bengali</p>
+			<td>
+			Bengali
 			</td>
-			<td style="width:200px">
-			<p style="text-align:center">Bulgarian</p>
+			<td>
+			Bulgarian
 			</td>
-			<td style="width:200px">
-			<p style="text-align:center">Catalan</p>
-			</td>
-		</tr>
-		<tr>
-			<td style="width:200px">
-			<p style="text-align:center">Chinese (China)</p>
-			</td>
-			<td style="width:200px">
-			<p style="text-align:center">Chinese (Taiwan)</p>
-			</td>
-			<td style="width:200px">
-			<p style="text-align:center">Czech</p>
-			</td>
-			<td style="width:200px">
-			<p style="text-align:center">Danish</p>
+			<td>
+			Catalan
 			</td>
 		</tr>
 		<tr>
-			<td style="width:200px">
-			<p style="text-align:center">Dutch</p>
+			<td>
+			Chinese (China)
 			</td>
-			<td style="width:200px">
-			<p style="text-align:center">Estonian</p>
+			<td>
+			Chinese (Taiwan)
 			</td>
-			<td style="width:200px">
-			<p style="text-align:center">Finnish</p>
+			<td>
+			Czech
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>French</p>
-			</td>
-		</tr>
-		<tr>
-			<td style="text-align:center; width:200px">
-			<p>German</p>
-			</td>
-			<td style="text-align:center; width:200px">
-			<p>Greek</p>
-			</td>
-			<td style="text-align:center; width:200px">
-			<p>Hebrew</p>
-			</td>
-			<td style="text-align:center; width:200px">
-			<p>Hindi</p>
+			<td>
+			Danish
 			</td>
 		</tr>
 		<tr>
-			<td style="text-align:center; width:200px">
-			<p>Hebrew</p>
+			<td>
+			Dutch
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Indonesian</p>
+			<td>
+			English
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Italian</p>
+			<td>
+			Estonian
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Japanese</p>
-			</td>
-		</tr>
-		<tr>
-			<td style="text-align:center; width:200px">
-			<p>Korean</p>
-			</td>
-			<td style="text-align:center; width:200px">
-			<p>Latvian</p>
-			</td>
-			<td style="text-align:center; width:200px">
-			<p>Lithuanian</p>
-			</td>
-			<td style="text-align:center; width:200px">
-			<p>Malay</p>
+			<td>
+			Finnish
 			</td>
 		</tr>
 		<tr>
-			<td style="text-align:center; width:200px">
-			<p>Norwegian</p>
+			<td>French</td>
+			<td>
+			German
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Polish</p>
+			<td>
+			Greek
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Portuguese (Brazilian)</p>
-			</td>
-			<td style="text-align:center; width:200px">
-			<p>Portuguese</p>
+			<td>
+			Hebrew
 			</td>
 		</tr>
 		<tr>
-			<td style="text-align:center; width:200px">
-			<p>Romanian</p>
+			<td>Hindi</td>
+			<td>
+			Indonesian
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Russian</p>
+			<td>
+			Italian
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Serbian</p>
-			</td>
-			<td style="text-align:center; width:200px">
-			<p>Slovak</p>
+			<td>
+			Japanese
 			</td>
 		</tr>
 		<tr>
-			<td style="text-align:center; width:200px">
-			<p>Spanish</p>
+			<td>
+			Korean
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Swedish</p>
+			<td>
+			Latvian
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Thai</p>
+			<td>
+			Lithuanian
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Turkish</p>
+			<td>
+			Malay
 			</td>
 		</tr>
 		<tr>
-			<td style="text-align:center; width:200px">
-			<p>Ukrainian</p>
+			<td>
+			Norwegian
 			</td>
-			<td style="text-align:center; width:200px">
-			<p>Vietnamese</p>
+			<td>
+			Polish
 			</td>
-			<td style="text-align:center; width:200px">&nbsp;</td>
-			<td style="text-align:center; width:200px">&nbsp;</td>
+			<td>
+			Portuguese (Brazilian)
+			</td>
+			<td>
+			Portuguese
+			</td>
+		</tr>
+		<tr>
+			<td>
+			Romanian
+			</td>
+			<td>
+			Russian
+			</td>
+			<td>
+			Serbian
+			</td>
+			<td>
+			Slovak
+			</td>
+		</tr>
+		<tr>
+			<td>
+			Spanish
+			</td>
+			<td>
+			Swedish
+			</td>
+			<td>
+			Thai
+			</td>
+			<td>
+			Turkish
+			</td>
+		</tr>
+		<tr>
+			<td>
+			Ukrainian
+			</td>
+			<td>
+			Vietnamese
+			</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
 		</tr>
 	</tbody>
 </table>
 
+<info-box>
+	If you want to help translate CKEditor 5 into your native language, join the [CKEditor 5 project on Transifex](https://www.transifex.com/ckeditor/ckeditor5/). Your help will be much appreciated!
+</info-box>
+
 ## Related features
 
-There are other CKEditor 5 features that will help you control the content language:
+CKEditor 5 has other features that will help you control the content language:
 
 * {@link features/language Text part Language}  &ndash; Set the language of the selected content part to support multilingual texts.
+
+## Contribute
+
+The source code of the feature is available on GitHub at [https://github.com/ckeditor/ckeditor5-dev/tree/master/packages/ckeditor5-dev-translations](https://github.com/ckeditor/ckeditor5-dev/tree/master/packages/ckeditor5-dev-translations).

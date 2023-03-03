@@ -6,13 +6,7 @@ category: features
 
 {@snippet features/build-remove-format-source}
 
-The remove format feature allows you to quickly remove any text formatting applied using inline HTML elements and CSS styles, like {@link features/basic-styles basic text styles} (bold, italic, etc.), {@link features/font font family, size, and color} and similar.
-
-Note that block-level formatting ({@link features/headings headings}, {@link features/images-overview images}) and semantic data ({@link features/link links}) will not be removed by this feature.
-
-<info-box info>
-	The Remove formatting feature is enabled by default in the {@link installation/getting-started/predefined-builds#superbuild superbuild} only. See the [installation](#installation) section to learn how to enable it in your editor.
-</info-box>
+The remove format feature lets you quickly remove any text formatting applied using inline HTML elements and CSS styles, like {@link features/basic-styles basic text styles} (bold, italic) or {@link features/font font family, size, and color}. This feature does not remove block-level formatting ({@link features/headings headings}, {@link features/images-overview images}) or semantic data ({@link features/link links}).
 
 ## Demo
 
@@ -23,13 +17,6 @@ Select the content you want to clean up and press the remove format button {@ico
 <info-box info>
 	This demo only presents a limited set of features. Visit the {@link examples/builds/full-featured-editor full-featured editor example} to see more in action.
 </info-box>
-
-## Related features
-
-There are more CKEditor 5 features that can help you format your content:
-* {@link features/basic-styles Basic text styles} &ndash; The essentials, like **bold**, *italic* and others.
-* {@link features/font Font styles} &ndash; Easily and efficiently control the font {@link features/font#configuring-the-font-family-feature family}, {@link features/font#configuring-the-font-size-feature size}, {@link features/font#configuring-the-font-color-and-font-background-color-features text or background color}.
-* {@link features/text-alignment Text alignment} &ndash; Align your content left, align it right, center it or justify.
 
 ## Configuring the remove format feature
 
@@ -43,7 +30,7 @@ Doing that will spare the users the pain of manually removing formatting every t
 
 ## Integrating with editor features
 
-To make it possible for the remove formatting feature to work with your custom content, you must first mark it in the {@link framework/guides/architecture/editing-engine#schema schema}. All you need to do is set the `isFormatting` property on your custom {@link framework/guides/architecture/editing-engine#text-attributes text attribute}.
+To make it possible for the remove formatting feature to work with your custom content, you must first mark it in the {@link framework/architecture/editing-engine#schema schema}. All you need to do is set the `isFormatting` property on your custom {@link framework/architecture/editing-engine#text-attributes text attribute}.
 
 For instance, if you want the feature to remove {@link features/link links} as well (not supported by default), you need to create a {@link installation/getting-started/configuration#adding-simple-standalone-features simple plugin} that will extend the schema and tell the editor that the `linkHref` text attribute produced by the link feature is a formatting attribute:
 
@@ -61,22 +48,28 @@ Enable the `RemoveFormatLinks` plugin in the {@link installation/getting-started
 
 ```js
 ClassicEditor
-	.create( ..., {
+	.create( document.querySelector( '#editor' ), {
 		plugins: [
 			RemoveFormat,
 			RemoveFormatLinks,
+			// More plugins.
 			// ...
 		],
 		toolbar: [
 			'removeFormat',
+			// More toolbar items.
 			// ...
 		]
 	} )
 ```
 
-From now on, the the "Remove Format" button should also remove links in the content. {@link module:engine/model/schema~Schema#setAttributeProperties Learn more about attribute properties.}
+From now on, the remove format button should also remove links in the content. {@link module:engine/model/schema~Schema#setAttributeProperties Learn more about attribute properties.}
 
 ## Installation
+
+<info-box info>
+	The remove format feature is enabled by default in the {@link installation/getting-started/predefined-builds#superbuild superbuild} only.
+</info-box>
 
 To add this feature to your rich-text editor, install the [`@ckeditor/ckeditor5-remove-format`](https://www.npmjs.com/package/@ckeditor/ckeditor5-remove-format) package:
 
@@ -91,16 +84,23 @@ import RemoveFormat from '@ckeditor/ckeditor5-remove-format/src/removeformat';
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ RemoveFormat, ... ],
-		toolbar: [ 'removeFormat', ... ]
+		plugins: [ RemoveFormat, /* ... */ ],
+		toolbar: [ 'removeFormat', /* ... */ ]
 	} )
-	.then( ... )
-	.catch( ... );
+	.then( /* ... */ )
+	.catch( /* ... */ );
 ```
 
 <info-box info>
-	Read more about {@link installation/getting-started/installing-plugins installing plugins}.
+	Read more about {@link installation/plugins/installing-plugins installing plugins}.
 </info-box>
+
+## Related features
+
+CKEditor 5 has more features that can help you format your content:
+* {@link features/basic-styles Basic text styles} &ndash; The essentials, like **bold**, *italic*, and others.
+* {@link features/font Font styles} &ndash; Easily and efficiently control the font {@link features/font#configuring-the-font-family-feature family}, {@link features/font#configuring-the-font-size-feature size}, {@link features/font#configuring-the-font-color-and-font-background-color-features text or background color}.
+* {@link features/text-alignment Text alignment} &ndash; Align your content left, align it right, center it, or justify.
 
 ## Common API
 
@@ -114,9 +114,9 @@ editor.execute( 'removeFormat' );
 ```
 
 <info-box>
-	We recommend using the official {@link framework/guides/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
 
 ## Contribute
 
-The source code of the feature is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-remove-format.
+The source code of the feature is available on GitHub at [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-remove-format](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-remove-format).

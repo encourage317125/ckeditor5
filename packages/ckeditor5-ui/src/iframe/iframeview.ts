@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -8,29 +8,30 @@
  */
 
 import View from '../view';
+
 import type { Locale } from '@ckeditor/ckeditor5-utils';
 
 /**
  * The iframe view class.
  *
- * 		const iframe = new IframeView();
+ * ```ts
+ * const iframe = new IframeView();
  *
- *		iframe.render();
- *		document.body.appendChild( iframe.element );
+ * iframe.render();
+ * document.body.appendChild( iframe.element );
  *
- * 		iframe.on( 'loaded', () => {
- *			console.log( 'The iframe has loaded', iframe.element.contentWindow );
- *		} );
+ * iframe.on( 'loaded', () => {
+ * 	console.log( 'The iframe has loaded', iframe.element.contentWindow );
+ * } );
  *
- * 		iframe.element.src = 'https://ckeditor.com';
- *
- * @extends module:ui/view~View
+ * iframe.element.src = 'https://ckeditor.com';
+ * ```
  */
-export default class IframeView extends View {
+export default class IframeView extends View<HTMLIFrameElement> {
 	/**
 	 * Creates a new instance of the iframe view.
 	 *
-	 * @param {module:utils/locale~Locale} [locale] The locale instance.
+	 * @param locale The locale instance.
 	 */
 	constructor( locale?: Locale ) {
 		super( locale );
@@ -58,7 +59,7 @@ export default class IframeView extends View {
 	 * Renders the iframe's {@link #element} and returns a `Promise` for asynchronous
 	 * child `contentDocument` loading process.
 	 *
-	 * @returns {Promise} A promise which resolves once the iframe `contentDocument` has
+	 * @returns A promise which resolves once the iframe `contentDocument` has
 	 * been {@link #event:loaded}.
 	 */
 	public override render(): Promise<unknown> {
@@ -73,9 +74,8 @@ export default class IframeView extends View {
 /**
  * Fired when the DOM iframe's `contentDocument` finished loading.
  *
- * @event loaded
+ * @eventName ~IframeView#loaded
  */
-
 export type IframeViewLoadedEvent = {
 	name: 'loaded';
 	args: [];

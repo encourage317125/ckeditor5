@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -7,17 +7,18 @@
  * @module typing/inserttextobserver
  */
 
-import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata';
-import Observer from '@ckeditor/ckeditor5-engine/src/view/observer/observer';
-import EventInfo from '@ckeditor/ckeditor5-utils/src/eventinfo';
-import env from '@ckeditor/ckeditor5-utils/src/env';
+import { env, EventInfo } from '@ckeditor/ckeditor5-utils';
 
-import type { View } from '@ckeditor/ckeditor5-engine';
-import type { ViewDocumentInputEvent } from '@ckeditor/ckeditor5-engine/src/view/observer/inputobserver';
-import type { ViewDocumentCompositionEvent } from '@ckeditor/ckeditor5-engine/src/view/observer/compositionobserver';
-import type Selection from '@ckeditor/ckeditor5-engine/src/view/selection';
-import type Range from '@ckeditor/ckeditor5-engine/src/view/range';
-import type DocumentSelection from '@ckeditor/ckeditor5-engine/src/view/documentselection';
+import {
+	DomEventData,
+	Observer,
+	type View,
+	type ViewDocumentCompositionEndEvent,
+	type ViewDocumentInputEvent,
+	type ViewDocumentSelection,
+	type ViewRange,
+	type ViewSelection
+} from '@ckeditor/ckeditor5-engine';
 
 const TYPING_INPUT_TYPES = [
 	// For collapsed range:
@@ -35,8 +36,6 @@ const TYPING_INPUT_TYPES = [
 
 /**
  * Text insertion observer introduces the {@link module:engine/view/document~Document#event:insertText} event.
- *
- * @extends module:engine/view/observer/observer~Observer
  */
 export default class InsertTextObserver extends Observer {
 	/**
@@ -80,7 +79,7 @@ export default class InsertTextObserver extends Observer {
 		} );
 
 		// Note: The priority must be lower than the CompositionObserver handler to call it after the renderer is unblocked.
-		viewDocument.on<ViewDocumentCompositionEvent>( 'compositionend', ( evt, { data, domEvent } ) => {
+		viewDocument.on<ViewDocumentCompositionEndEvent>( 'compositionend', ( evt, { data, domEvent } ) => {
 			// On Android composition events are immediately applied to the model.
 			// On non-Android the model is updated only on composition end.
 			// On Android we can't rely on composition start/end to update model.
@@ -93,7 +92,7 @@ export default class InsertTextObserver extends Observer {
 				return;
 			}
 
-			// @if CK_DEBUG_TYPING // if ( window.logCKETyping ) {
+			// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
 			// @if CK_DEBUG_TYPING // 	console.log( `%c[InsertTextObserver]%c Fire insertText event, text: ${ JSON.stringify( data ) }`,
 			// @if CK_DEBUG_TYPING // 		'font-weight: bold; color: green;', ''
 			// @if CK_DEBUG_TYPING // 	);
@@ -138,12 +137,8 @@ export default class InsertTextObserver extends Observer {
  *
  * **Note**: This event is fired by the {@link module:typing/inserttextobserver~InsertTextObserver input feature}.
  *
- * @event module:engine/view/document~Document#event:insertText
- * @param {module:engine/view/observer/domeventdata~DomEventData} data
- * @param {String} data.text The text to be inserted.
- * @param {module:engine/view/selection~Selection} [data.selection] The selection into which the text should be inserted.
- * If not specified, the insertion should occur at the current view selection.
- * @param {module:engine/view/range~Range} [data.resultRange] The range that view selection should be set to after insertion.
+ * @eventName module:engine/view/document~Document#insertText
+ * @param data The event data.
  */
 export type ViewDocumentInsertTextEvent = {
 	name: 'insertText';
@@ -151,7 +146,20 @@ export type ViewDocumentInsertTextEvent = {
 };
 
 export interface InsertTextEventData extends DomEventData {
+
+	/**
+	 *  The text to be inserted.
+	 */
 	text: string;
-	selection: Selection | DocumentSelection;
-	resultRange?: Range;
+
+	/**
+	 * The selection into which the text should be inserted.
+	 * If not specified, the insertion should occur at the current view selection.
+	 */
+	selection: ViewSelection | ViewDocumentSelection;
+
+	/**
+	 * The range that view selection should be set to after insertion.
+	 */
+	resultRange?: ViewRange;
 }

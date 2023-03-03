@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -10,12 +10,14 @@
 import Batch, { type BatchType } from './batch';
 import Document from './document';
 import MarkerCollection from './markercollection';
-import ModelPosition, { type PositionStickiness } from './position';
+import ModelPosition, { type PositionOffset, type PositionStickiness } from './position';
 import ModelRange from './range';
-import ModelSelection, { type Selectable } from './selection';
+import ModelSelection, { type PlaceOrOffset, type Selectable } from './selection';
 import OperationFactory from './operation/operationfactory';
+import DocumentSelection from './documentselection';
 import Schema from './schema';
 import Writer from './writer';
+import Node from './node';
 
 import { autoParagraphEmptyRoots } from './utils/autoparagraphing';
 import { injectSelectionPostFixer } from './utils/selection-post-fixer';
@@ -26,76 +28,64 @@ import insertObject from './utils/insertobject';
 import modifySelection from './utils/modifyselection';
 
 import type ModelDocumentFragment from './documentfragment';
-import type DocumentSelection from './documentselection';
 import type Item from './item';
 import type ModelElement from './element';
 import type Operation from './operation/operation';
 
-import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
-import { type DecoratedMethodEvent, Observable } from '@ckeditor/ckeditor5-utils/src/observablemixin';
+import {
+	CKEditorError,
+	ObservableMixin,
+	type DecoratedMethodEvent
+} from '@ckeditor/ckeditor5-utils';
 
-// @if CK_DEBUG_ENGINE // const { dumpTrees } = require( '../dev-utils/utils' );
+// @if CK_DEBUG_ENGINE // const { dumpTrees, initDocumentDumping } = require( '../dev-utils/utils' );
 // @if CK_DEBUG_ENGINE // const { OperationReplayer } = require( '../dev-utils/operationreplayer' ).default;
 
 /**
  * Editor's data model. Read about the model in the
- * {@glink framework/guides/architecture/editing-engine engine architecture guide}.
- *
- * @mixes module:utils/observablemixin~ObservableMixin
+ * {@glink framework/architecture/editing-engine engine architecture} guide.
  */
-export default class Model extends Observable {
+export default class Model extends ObservableMixin() {
+	/**
+	 * Model's marker collection.
+	 */
 	public readonly markers: MarkerCollection;
+
+	/**
+	 * Model's document.
+	 */
 	public readonly document: Document;
+
+	/**
+	 * Model's schema.
+	 */
 	public readonly schema: Schema;
 
+	/**
+	 * All callbacks added by {@link module:engine/model/model~Model#change} or
+	 * {@link module:engine/model/model~Model#enqueueChange} methods waiting to be executed.
+	 */
 	private readonly _pendingChanges: Array<{ batch: Batch; callback: ( writer: Writer ) => any }>;
+
+	/**
+	 * The last created and currently used writer instance.
+	 */
 	private _currentWriter: Writer | null;
+
+	// @if CK_DEBUG_ENGINE // private _operationLogs: Array<string>;
+	// @if CK_DEBUG_ENGINE // private _appliedOperations: Array<Operation>;
 
 	constructor() {
 		super();
 
-		/**
-		 * Model's marker collection.
-		 *
-		 * @readonly
-		 * @member {module:engine/model/markercollection~MarkerCollection}
-		 */
 		this.markers = new MarkerCollection();
-
-		/**
-		 * Model's document.
-		 *
-		 * @readonly
-		 * @member {module:engine/model/document~Document}
-		 */
 		this.document = new Document( this );
-
-		/**
-		 * Model's schema.
-		 *
-		 * @readonly
-		 * @member {module:engine/model/schema~Schema}
-		 */
 		this.schema = new Schema();
 
-		/**
-		 * All callbacks added by {@link module:engine/model/model~Model#change} or
-		 * {@link module:engine/model/model~Model#enqueueChange} methods waiting to be executed.
-		 *
-		 * @private
-		 * @type {Array.<Function>}
-		 */
 		this._pendingChanges = [];
-
-		/**
-		 * The last created and currently used writer instance.
-		 *
-		 * @private
-		 * @member {module:engine/model/writer~Writer}
-		 */
 		this._currentWriter = null;
 
-		( [ 'insertContent', 'insertObject', 'deleteContent', 'modifySelection', 'getSelectedContent', 'applyOperation' ] as const )
+		( [ 'deleteContent', 'modifySelection', 'getSelectedContent', 'applyOperation' ] as const )
 			.forEach( methodName => this.decorate( methodName ) );
 
 		// Adding operation validation with `highest` priority, so it is called before any other feature would like
@@ -167,9 +157,23 @@ export default class Model extends Observable {
 		// Post-fixer which takes care of adding empty paragraph elements to the empty roots.
 		this.document.registerPostFixer( autoParagraphEmptyRoots );
 
+		// The base implementation for "decorated" method with remapped arguments.
+		this.on<ModelInsertContentEvent>( 'insertContent', ( evt, [ content, selectable ] ) => {
+			evt.return = insertContent( this, content, selectable );
+		} );
+
+		// The base implementation for "decorated" method with remapped arguments.
+		this.on<ModelInsertObjectEvent>( 'insertObject', ( evt, [ element, selection, options ] ) => {
+			evt.return = insertObject( this, element, selection, options );
+		} );
+
+		// @if CK_DEBUG_ENGINE // initDocumentDumping( this.document );
 		// @if CK_DEBUG_ENGINE // this.on( 'applyOperation', () => {
 		// @if CK_DEBUG_ENGINE // 	dumpTrees( this.document, this.document.version );
 		// @if CK_DEBUG_ENGINE // }, { priority: 'lowest' } );
+
+		// @if CK_DEBUG_ENGINE // this._operationLogs = [];
+		// @if CK_DEBUG_ENGINE // this._appliedOperations = [];
 	}
 
 	/**
@@ -178,34 +182,40 @@ export default class Model extends Observable {
 	 * the {@link module:engine/model/document~Document#selection document's selection}, and
 	 * {@link module:engine/model/model~Model#markers model markers}.
 	 *
-	 *		model.change( writer => {
-	 *			writer.insertText( 'foo', paragraph, 'end' );
-	 *		} );
+	 * ```ts
+	 * model.change( writer => {
+	 * 	writer.insertText( 'foo', paragraph, 'end' );
+	 * } );
+	 * ```
 	 *
 	 * All changes inside the change block use the same {@link module:engine/model/batch~Batch} so they are combined
 	 * into a single undo step.
 	 *
-	 *		model.change( writer => {
-	 *			writer.insertText( 'foo', paragraph, 'end' ); // foo.
+	 * ```ts
+	 * model.change( writer => {
+	 * 	writer.insertText( 'foo', paragraph, 'end' ); // foo.
 	 *
-	 *			model.change( writer => {
-	 *				writer.insertText( 'bar', paragraph, 'end' ); // foobar.
-	 *			} );
+	 * 	model.change( writer => {
+	 * 		writer.insertText( 'bar', paragraph, 'end' ); // foobar.
+	 * 	} );
 	 *
-	 * 			writer.insertText( 'bom', paragraph, 'end' ); // foobarbom.
-	 *		} );
+	 * 	writer.insertText( 'bom', paragraph, 'end' ); // foobarbom.
+	 * } );
+	 * ```
 	 *
 	 * The callback of the `change()` block is executed synchronously.
 	 *
 	 * You can also return a value from the change block.
 	 *
-	 *		const img = model.change( writer => {
-	 *			return writer.createElement( 'img' );
-	 *		} );
+	 * ```ts
+	 * const img = model.change( writer => {
+	 * 	return writer.createElement( 'img' );
+	 * } );
+	 * ```
 	 *
 	 * @see #enqueueChange
-	 * @param {Function} callback Callback function which may modify the model.
-	 * @returns {*} Value returned by the callback.
+	 * @typeParam TReturn The return type of the provided callback.
+	 * @param callback Callback function which may modify the model.
 	 */
 	public change<TReturn>( callback: ( writer: Writer ) => TReturn ): TReturn {
 		try {
@@ -225,10 +235,35 @@ export default class Model extends Observable {
 		}
 	}
 
-	public enqueueChange(
-		batchOrType: Batch | BatchType | undefined,
-		callback: ( writer: Writer ) => unknown
-	): void;
+	/**
+	 * The `enqueueChange()` method performs similar task as the {@link #change `change()` method}, with two major differences.
+	 *
+	 * First, the callback of `enqueueChange()` is executed when all other enqueued changes are done. It might be executed
+	 * immediately if it is not nested in any other change block, but if it is nested in another (enqueue)change block,
+	 * it will be delayed and executed after the outermost block.
+	 *
+	 * ```ts
+	 * model.change( writer => {
+	 * 	console.log( 1 );
+	 *
+	 * 	model.enqueueChange( writer => {
+	 * 		console.log( 2 );
+	 * 	} );
+	 *
+	 * 	console.log( 3 );
+	 * } ); // Will log: 1, 3, 2.
+	 * ```
+	 *
+	 * In addition to that, the changes enqueued with `enqueueChange()` will be converted separately from the changes
+	 * done in the outer `change()` block.
+	 *
+	 * By default, a new batch with the default {@link module:engine/model/batch~Batch#constructor batch type} is created.
+	 * To define the {@link module:engine/model/batch~Batch} into which you want to add your changes,
+	 * use {@link #enqueueChange:CUSTOM_BATCH `enqueueChange( batchOrType, callback )`}.
+	 *
+	 * @label DEFAULT_BATCH
+	 * @param callback Callback function which may modify the model.
+	 */
 	public enqueueChange(
 		callback: ( writer: Writer ) => unknown
 	): void;
@@ -240,42 +275,52 @@ export default class Model extends Observable {
 	 * immediately if it is not nested in any other change block, but if it is nested in another (enqueue)change block,
 	 * it will be delayed and executed after the outermost block.
 	 *
-	 *		model.change( writer => {
-	 *			console.log( 1 );
+	 * ```ts
+	 * model.change( new Batch(), writer => {
+	 * 	console.log( 1 );
 	 *
-	 *			model.enqueueChange( writer => {
-	 *				console.log( 2 );
-	 *			} );
+	 * 	model.enqueueChange( new Batch(), writer => {
+	 * 		console.log( 2 );
+	 * 	} );
 	 *
-	 * 			console.log( 3 );
-	 *		} ); // Will log: 1, 3, 2.
+	 * 	console.log( 3 );
+	 * } ); // Will log: 1, 3, 2.
+	 * ```
 	 *
 	 * In addition to that, the changes enqueued with `enqueueChange()` will be converted separately from the changes
 	 * done in the outer `change()` block.
 	 *
 	 * Second, it lets you define the {@link module:engine/model/batch~Batch} into which you want to add your changes.
-	 * By default, a new batch with the default {@link module:engine/model/batch~Batch#constructor batch type} is created.
-	 * In the sample above, the `change` and `enqueueChange` blocks will use a different batch (and a different
-	 * {@link module:engine/model/writer~Writer} instance since each of them operates on a separate batch).
+	 * If you want to use default {@link module:engine/model/batch~Batch#constructor batch type}, use
+	 * {@link #enqueueChange:DEFAULT_BATCH `enqueueChange( callback )`}.
 	 *
-	 *		model.enqueueChange( { isUndoable: false }, writer => {
-	 *			writer.insertText( 'foo', paragraph, 'end' );
-	 *		} );
+	 * ```ts
+	 * model.enqueueChange( { isUndoable: false }, writer => {
+	 * 	writer.insertText( 'foo', paragraph, 'end' );
+	 * } );
+	 * ```
 	 *
 	 * When using the `enqueueChange()` block you can also add some changes to the batch you used before.
 	 *
-	 *		model.enqueueChange( batch, writer => {
-	 *			writer.insertText( 'foo', paragraph, 'end' );
-	 *		} );
+	 * ```ts
+	 * model.enqueueChange( batch, writer => {
+	 * 	writer.insertText( 'foo', paragraph, 'end' );
+	 * } );
+	 * ```
 	 *
 	 * In order to make a nested `enqueueChange()` create a single undo step together with the changes done in the outer `change()`
 	 * block, you can obtain the batch instance from the  {@link module:engine/model/writer~Writer#batch writer} of the outer block.
 	 *
-	 * @param {module:engine/model/batch~Batch|Object} [batchOrType] A batch or a
-	 * {@link module:engine/model/batch~Batch#constructor batch type} that should be used in the callback. If not defined, a new batch with
-	 * the default type will be created.
-	 * @param {Function} callback Callback function which may modify the model.
+	 * @label CUSTOM_BATCH
+	 * @param batchOrType A batch or a {@link module:engine/model/batch~Batch#constructor batch type} that should be used in the callback.
+	 * If not defined, a new batch with the default type will be created.
+	 * @param callback Callback function which may modify the model.
 	 */
+	public enqueueChange(
+		batchOrType: Batch | BatchType | undefined,
+		callback: ( writer: Writer ) => unknown
+	): void;
+
 	public enqueueChange(
 		batchOrType: Batch | BatchType | ( ( writer: Writer ) => unknown ) | undefined,
 		callback?: ( writer: Writer ) => unknown
@@ -303,51 +348,42 @@ export default class Model extends Observable {
 	}
 
 	/**
-	 * {@link module:utils/observablemixin~ObservableMixin#decorate Decorated} function for applying
+	 * {@link module:utils/observablemixin~Observable#decorate Decorated} function for applying
 	 * {@link module:engine/model/operation/operation~Operation operations} to the model.
 	 *
 	 * This is a low-level way of changing the model. It is exposed for very specific use cases (like the undo feature).
 	 * Normally, to modify the model, you will want to use {@link module:engine/model/writer~Writer `Writer`}.
-	 * See also {@glink framework/guides/architecture/editing-engine#changing-the-model Changing the model} section
-	 * of the {@glink framework/guides/architecture/editing-engine Editing architecture} guide.
+	 * See also {@glink framework/architecture/editing-engine#changing-the-model Changing the model} section
+	 * of the {@glink framework/architecture/editing-engine Editing architecture} guide.
 	 *
-	 * @param {module:engine/model/operation/operation~Operation} operation The operation to apply.
+	 * @param operation The operation to apply.
 	 */
 	public applyOperation( operation: Operation ): void {
 		// @if CK_DEBUG_ENGINE // console.log( 'Applying ' + operation );
 
-		// @if CK_DEBUG_ENGINE // if ( !this._operationLogs ) {
-		// @if CK_DEBUG_ENGINE //	this._operationLogs = [];
-		// @if CK_DEBUG_ENGINE // }
-
 		// @if CK_DEBUG_ENGINE // this._operationLogs.push( JSON.stringify( operation ) );
-
-		// @if CK_DEBUG_ENGINE //if ( !this._appliedOperations ) {
-		// @if CK_DEBUG_ENGINE //	this._appliedOperations = [];
-		// @if CK_DEBUG_ENGINE //}
-
-		// @if CK_DEBUG_ENGINE //this._appliedOperations.push( operation );
+		// @if CK_DEBUG_ENGINE // this._appliedOperations.push( operation );
 
 		operation._execute();
 	}
 
-	// @if CK_DEBUG_ENGINE // getAppliedOperation() {
-	// @if CK_DEBUG_ENGINE //	if ( !this._appliedOperations ) {
-	// @if CK_DEBUG_ENGINE //		return '';
-	// @if CK_DEBUG_ENGINE //	}
+	// @if CK_DEBUG_ENGINE // public getAppliedOperation(): string {
+	// @if CK_DEBUG_ENGINE // 	if ( !this._appliedOperations ) {
+	// @if CK_DEBUG_ENGINE // 		return '';
+	// @if CK_DEBUG_ENGINE // 	}
 
-	// @if CK_DEBUG_ENGINE //	return this._appliedOperations.map( JSON.stringify ).join( '-------' );
+	// @if CK_DEBUG_ENGINE // 	return this._appliedOperations.map( operation => JSON.stringify( operation ) ).join( '-------' );
 	// @if CK_DEBUG_ENGINE // }
 
-	// @if CK_DEBUG_ENGINE // createReplayer( stringifiedOperations ) {
-	// @if CK_DEBUG_ENGINE //	return new OperationReplayer( this, '-------', stringifiedOperations );
+	// @if CK_DEBUG_ENGINE // public createReplayer( stringifiedOperations: string ): typeof OperationReplayer {
+	// @if CK_DEBUG_ENGINE // 	return new OperationReplayer( this, '-------', stringifiedOperations );
 	// @if CK_DEBUG_ENGINE // }
 
 	/**
 	 * Inserts content at the position in the editor specified by the selection, as one would expect the paste
 	 * functionality to work.
 	 *
-	 * **Note**: If you want to insert an {@glink framework/guides/deep-dive/schema#object-elements object element}
+	 * **Note**: If you want to insert an {@glink framework/deep-dive/schema#object-elements object element}
 	 * (e.g. a {@link module:widget/utils~toWidget widget}), see {@link #insertObject} instead.
 	 *
 	 * This is a high-level method. It takes the {@link #schema schema} into consideration when inserting
@@ -366,8 +402,8 @@ export default class Model extends Observable {
 	 * Inserting elements and text nodes into the model is not enough to make CKEditor 5 render that content
 	 * to the user. CKEditor 5 implements a model-view-controller architecture and what `model.insertContent()` does
 	 * is only adding nodes to the model. Additionally, you need to define
-	 * {@glink framework/guides/architecture/editing-engine#conversion converters} between the model and view
-	 * and define those nodes in the {@glink framework/guides/architecture/editing-engine#schema schema}.
+	 * {@glink framework/architecture/editing-engine#conversion converters} between the model and view
+	 * and define those nodes in the {@glink framework/architecture/editing-engine#schema schema}.
 	 *
 	 * So, while this method may seem similar to CKEditor 4 `editor.insertHtml()` (in fact, both methods
 	 * are used for paste-like content insertion), the CKEditor 5 method cannot be use to insert arbitrary HTML
@@ -377,116 +413,128 @@ export default class Model extends Observable {
 	 *
 	 * Using `insertContent()` with a manually created model structure:
 	 *
-	 *		// Let's create a document fragment containing such content as:
-	 *		//
-	 *		// <paragraph>foo</paragraph>
-	 *		// <blockQuote>
-	 *		//    <paragraph>bar</paragraph>
-	 *		// </blockQuote>
-	 *		const docFrag = editor.model.change( writer => {
-	 *			const p1 = writer.createElement( 'paragraph' );
-	 *			const p2 = writer.createElement( 'paragraph' );
-	 *			const blockQuote = writer.createElement( 'blockQuote' );
-	 *			const docFrag = writer.createDocumentFragment();
+	 * ```ts
+	 * // Let's create a document fragment containing such content as:
+	 * //
+	 * // <paragraph>foo</paragraph>
+	 * // <blockQuote>
+	 * //    <paragraph>bar</paragraph>
+	 * // </blockQuote>
+	 * const docFrag = editor.model.change( writer => {
+	 * 	const p1 = writer.createElement( 'paragraph' );
+	 * 	const p2 = writer.createElement( 'paragraph' );
+	 * 	const blockQuote = writer.createElement( 'blockQuote' );
+	 * 	const docFrag = writer.createDocumentFragment();
 	 *
-	 *			writer.append( p1, docFrag );
-	 *			writer.append( blockQuote, docFrag );
-	 *			writer.append( p2, blockQuote );
-	 *			writer.insertText( 'foo', p1 );
-	 *			writer.insertText( 'bar', p2 );
+	 * 	writer.append( p1, docFrag );
+	 * 	writer.append( blockQuote, docFrag );
+	 * 	writer.append( p2, blockQuote );
+	 * 	writer.insertText( 'foo', p1 );
+	 * 	writer.insertText( 'bar', p2 );
 	 *
-	 *			return docFrag;
-	 *		} );
+	 * 	return docFrag;
+	 * } );
 	 *
-	 *		// insertContent() does not have to be used in a change() block. It can, though,
-	 *		// so this code could be moved to the callback defined above.
-	 *		editor.model.insertContent( docFrag );
+	 * // insertContent() does not have to be used in a change() block. It can, though,
+	 * // so this code could be moved to the callback defined above.
+	 * editor.model.insertContent( docFrag );
+	 * ```
 	 *
 	 * Using `insertContent()` with an HTML string converted to a model document fragment (similar to the pasting mechanism):
 	 *
-	 *		// You can create your own HtmlDataProcessor instance or use editor.data.processor
-	 *		// if you have not overridden the default one (which is the HtmlDataProcessor instance).
-	 *		const htmlDP = new HtmlDataProcessor( viewDocument );
+	 * ```ts
+	 * // You can create your own HtmlDataProcessor instance or use editor.data.processor
+	 * // if you have not overridden the default one (which is the HtmlDataProcessor instance).
+	 * const htmlDP = new HtmlDataProcessor( viewDocument );
 	 *
-	 *		// Convert an HTML string to a view document fragment:
-	 *		const viewFragment = htmlDP.toView( htmlString );
+	 * // Convert an HTML string to a view document fragment:
+	 * const viewFragment = htmlDP.toView( htmlString );
 	 *
-	 *		// Convert the view document fragment to a model document fragment
-	 *		// in the context of $root. This conversion takes the schema into
-	 *		// account so if, for example, the view document fragment contained a bare text node,
-	 *		// this text node cannot be a child of $root, so it will be automatically
-	 *		// wrapped with a <paragraph>. You can define the context yourself (in the second parameter),
-	 *		// and e.g. convert the content like it would happen in a <paragraph>.
-	 *		// Note: The clipboard feature uses a custom context called $clipboardHolder
-	 *		// which has a loosened schema.
-	 *		const modelFragment = editor.data.toModel( viewFragment );
+	 * // Convert the view document fragment to a model document fragment
+	 * // in the context of $root. This conversion takes the schema into
+	 * // account so if, for example, the view document fragment contained a bare text node,
+	 * // this text node cannot be a child of $root, so it will be automatically
+	 * // wrapped with a <paragraph>. You can define the context yourself (in the second parameter),
+	 * // and e.g. convert the content like it would happen in a <paragraph>.
+	 * // Note: The clipboard feature uses a custom context called $clipboardHolder
+	 * // which has a loosened schema.
+	 * const modelFragment = editor.data.toModel( viewFragment );
 	 *
-	 *		editor.model.insertContent( modelFragment );
+	 * editor.model.insertContent( modelFragment );
+	 * ```
 	 *
 	 * By default this method will use the document selection but it can also be used with a position, range or selection instance.
 	 *
-	 *		// Insert text at the current document selection position.
-	 *		editor.model.change( writer => {
-	 *			editor.model.insertContent( writer.createText( 'x' ) );
-	 *		} );
+	 * ```ts
+	 * // Insert text at the current document selection position.
+	 * editor.model.change( writer => {
+	 * 	editor.model.insertContent( writer.createText( 'x' ) );
+	 * } );
 	 *
-	 *		// Insert text at a given position - the document selection will not be modified.
-	 *		editor.model.change( writer => {
-	 *			editor.model.insertContent( writer.createText( 'x' ), doc.getRoot(), 2 );
+	 * // Insert text at a given position - the document selection will not be modified.
+	 * editor.model.change( writer => {
+	 * 	editor.model.insertContent( writer.createText( 'x' ), doc.getRoot(), 2 );
 	 *
-	 *			// Which is a shorthand for:
-	 *			editor.model.insertContent( writer.createText( 'x' ), writer.createPositionAt( doc.getRoot(), 2 ) );
-	 *		} );
+	 * 	// Which is a shorthand for:
+	 * 	editor.model.insertContent( writer.createText( 'x' ), writer.createPositionAt( doc.getRoot(), 2 ) );
+	 * } );
+	 * ```
 	 *
 	 * If you want the document selection to be moved to the inserted content, use the
 	 * {@link module:engine/model/writer~Writer#setSelection `setSelection()`} method of the writer after inserting
 	 * the content:
 	 *
-	 *		editor.model.change( writer => {
-	 *			const paragraph = writer.createElement( 'paragraph' );
+	 * ```ts
+	 * editor.model.change( writer => {
+	 * 	const paragraph = writer.createElement( 'paragraph' );
 	 *
-	 *			// Insert an empty paragraph at the beginning of the root.
-	 *			editor.model.insertContent( paragraph, writer.createPositionAt( editor.model.document.getRoot(), 0 ) );
+	 * 	// Insert an empty paragraph at the beginning of the root.
+	 * 	editor.model.insertContent( paragraph, writer.createPositionAt( editor.model.document.getRoot(), 0 ) );
 	 *
-	 *			// Move the document selection to the inserted paragraph.
-	 *			writer.setSelection( paragraph, 'in' );
-	 *		} );
+	 * 	// Move the document selection to the inserted paragraph.
+	 * 	writer.setSelection( paragraph, 'in' );
+	 * } );
+	 * ```
 	 *
 	 * If an instance of the {@link module:engine/model/selection~Selection model selection} is passed as `selectable`,
 	 * the new content will be inserted at the passed selection (instead of document selection):
 	 *
-	 *		editor.model.change( writer => {
-	 *			// Create a selection in a paragraph that will be used as a place of insertion.
-	 *			const selection = writer.createSelection( paragraph, 'in' );
+	 * ```ts
+	 * editor.model.change( writer => {
+	 * 	// Create a selection in a paragraph that will be used as a place of insertion.
+	 * 	const selection = writer.createSelection( paragraph, 'in' );
 	 *
-	 *			// Insert the new text at the created selection.
-	 *			editor.model.insertContent( writer.createText( 'x' ), selection );
+	 * 	// Insert the new text at the created selection.
+	 * 	editor.model.insertContent( writer.createText( 'x' ), selection );
 	 *
-	 *			// insertContent() modifies the passed selection instance so it can be used to set the document selection.
-	 *			// Note: This is not necessary when you passed the document selection to insertContent().
-	 *			writer.setSelection( selection );
-	 *		} );
+	 * 	// insertContent() modifies the passed selection instance so it can be used to set the document selection.
+	 * 	// Note: This is not necessary when you passed the document selection to insertContent().
+	 * 	writer.setSelection( selection );
+	 * } );
+	 * ```
 	 *
 	 * @fires insertContent
-	 * @param {module:engine/model/documentfragment~DocumentFragment|module:engine/model/item~Item} content The content to insert.
-	 * @param {module:engine/model/selection~Selectable} [selectable=model.document.selection]
-	 * The selection into which the content should be inserted. If not provided the current model document selection will be used.
-	 * @param {Number|'before'|'end'|'after'|'on'|'in'} [placeOrOffset] To be used when a model item was passed as `selectable`.
+	 * @param content The content to insert.
+	 * @param selectable The selection into which the content should be inserted.
+	 * If not provided the current model document selection will be used.
+	 * @param placeOrOffset To be used when a model item was passed as `selectable`.
 	 * This param defines a position in relation to that item.
-	 * @returns {module:engine/model/range~Range} Range which contains all the performed changes. This is a range that, if removed,
-	 * would return the model to the state before the insertion. If no changes were preformed by `insertContent`, returns a range collapsed
 	 * at the insertion position.
 	 */
 	public insertContent(
 		content: Item | ModelDocumentFragment,
 		selectable?: Selectable,
-		placeOrOffset?: number | 'before' | 'end' | 'after' | 'on' | 'in'
+		placeOrOffset?: PlaceOrOffset,
+		...rest: Array<unknown>
 	): ModelRange {
-		return insertContent( this, content, selectable, placeOrOffset );
+		const selection = normalizeSelectable( selectable, placeOrOffset );
+
+		// Passing all call arguments so it acts like decorated method.
+		return this.fire<ModelInsertContentEvent>( 'insertContent', [ content, selection, placeOrOffset, ...rest ] )!;
 	}
 
 	/**
-	 * Inserts an {@glink framework/guides/deep-dive/schema#object-elements object element} at a specific position in the editor content.
+	 * Inserts an {@glink framework/deep-dive/schema#object-elements object element} at a specific position in the editor content.
 	 *
 	 * This is a high-level API:
 	 * * It takes the {@link #schema schema} into consideration,
@@ -505,75 +553,84 @@ export default class Model extends Observable {
 	 * * Inserting object into the model is not enough to make CKEditor 5 render that content to the user.
 	 * CKEditor 5 implements a model-view-controller architecture and what `model.insertObject()` does
 	 * is only adding nodes to the model. Additionally, you need to define
-	 * {@glink framework/guides/architecture/editing-engine#conversion converters} between the model and view
-	 * and define those nodes in the {@glink framework/guides/architecture/editing-engine#schema schema}.
+	 * {@glink framework/architecture/editing-engine#conversion converters} between the model and view
+	 * and define those nodes in the {@glink framework/architecture/editing-engine#schema schema}.
 	 *
 	 * # Examples
 	 *
 	 * Use the following code to insert an object at the current selection and keep the selection on the inserted element:
 	 *
-	 *		const rawHtmlEmbedElement = writer.createElement( 'rawHtml' );
+	 * ```ts
+	 * const rawHtmlEmbedElement = writer.createElement( 'rawHtml' );
 	 *
-	 *		model.insertObject( rawHtmlEmbedElement, null, null, {
-	 *			setSelection: 'on'
-	 *		} );
+	 * model.insertObject( rawHtmlEmbedElement, null, null, {
+	 * 	setSelection: 'on'
+	 * } );
+	 * ```
 	 *
 	 * Use the following code to insert an object at the current selection and nudge the selection after the inserted object:
 	 *
-	 *		const pageBreakElement = writer.createElement( 'pageBreak' );
+	 * ```ts
+	 * const pageBreakElement = writer.createElement( 'pageBreak' );
  	 *
-	 *		model.insertObject( pageBreakElement, null, null, {
-	 *			setSelection: 'after'
-	 *		} );
+	 * model.insertObject( pageBreakElement, null, null, {
+	 * 	setSelection: 'after'
+	 * } );
+	 * ```
 	 *
 	 * Use the following code to insert an object at the current selection and avoid splitting the content (non-destructive insertion):
 	 *
-	 *		const tableElement = writer.createElement( 'table' );
+	 * ```ts
+	 * const tableElement = writer.createElement( 'table' );
  	 *
-	 *		model.insertObject( tableElement, null, null, {
-	 *			findOptimalPosition: 'auto'
-	 *		} );
+	 * model.insertObject( tableElement, null, null, {
+	 * 	findOptimalPosition: 'auto'
+	 * } );
+	 * ```
 	 *
 	 * Use the following code to insert an object at the specific range (also: replace the content of the range):
 	 *
-	 *		const tableElement = writer.createElement( 'table' );
-	 *		const range = model.createRangeOn( model.document.getRoot().getChild( 1 ) );
+	 * ```ts
+	 * const tableElement = writer.createElement( 'table' );
+	 * const range = model.createRangeOn( model.document.getRoot().getChild( 1 ) );
  	 *
-	 *		model.insertObject( tableElement, range );
+	 * model.insertObject( tableElement, range );
+	 * ```
 	 *
-	 * @param {module:engine/model/element~Element} object An object to be inserted into the model document.
-	 * @param {module:engine/model/selection~Selectable} [selectable=model.document.selection]
-	 * A selectable where the content should be inserted. If not specified, the current
+	 * @param element An object to be inserted into the model document.
+	 * @param selectable A selectable where the content should be inserted. If not specified, the current
 	 * {@link module:engine/model/document~Document#selection document selection} will be used instead.
-	 * @param {Number|'before'|'end'|'after'|'on'|'in'} placeOrOffset Specifies the exact place or offset for the insertion to take place,
-	 * relative to `selectable`.
-	 * @param {Object} [options] Additional options.
-	 * @param {'auto'|'before'|'after'} [options.findOptimalPosition] An option that, when set, adjusts the insertion position (relative to
+	 * @param placeOrOffset Specifies the exact place or offset for the insertion to take place, relative to `selectable`.
+	 * @param options Additional options.
+	 * @param options.findOptimalPosition An option that, when set, adjusts the insertion position (relative to
 	 * `selectable` and `placeOrOffset`) so that the content of `selectable` is not split upon insertion (a.k.a. non-destructive insertion).
 	 * * When `'auto'`, the algorithm will decide whether to insert the object before or after `selectable` to avoid content splitting.
 	 * * When `'before'`, the closest position before `selectable` will be used that will not result in content splitting.
 	 * * When `'after'`, the closest position after `selectable` will be used that will not result in content splitting.
 	 *
 	 * Note that this option only works for block objects. Inline objects are inserted into text and do not split blocks.
-	 * @param {'on'|'after'} [options.setSelection] An option that, when set, moves the
+	 * @param options.setSelection An option that, when set, moves the
 	 * {@link module:engine/model/document~Document#selection document selection} after inserting the object.
 	 * * When `'on'`, the document selection will be set on the inserted object.
 	 * * When `'after'`, the document selection will move to the closest text node after the inserted object. If there is no
 	 * such text node, a paragraph will be created and the document selection will be moved inside it.
-	 * @returns {module:engine/model/range~Range} A range which contains all the performed changes. This is a range that, if removed,
-	 * would return the model to the state before the insertion. If no changes were preformed by `insertObject()`, returns a range collapsed
 	 * at the insertion position.
 	 */
 	public insertObject(
-		object: ModelElement,
+		element: ModelElement,
 		selectable?: Selectable,
-		placeOrOffset?: number | 'before' | 'end' | 'after' | 'on' | 'in' | null,
+		placeOrOffset?: PlaceOrOffset | null,
 		options?: {
 			findOptimalPosition?: 'auto' | 'before' | 'after';
 			setSelection?: 'on' | 'after';
-		}
+		},
+		...rest: Array<unknown>
 	): ModelRange {
-		return insertObject( this, object, selectable, placeOrOffset, options );
+		const selection = normalizeSelectable( selectable, placeOrOffset );
+
+		// Note that options are fired as 2 arguments for backward compatibility with the decorated method.
+		// Passing all call arguments so it acts like decorated method.
+		return this.fire<ModelInsertObjectEvent>( 'insertObject', [ element, selection, options, options, ...rest ] )!;
 	}
 
 	/**
@@ -588,10 +645,8 @@ export default class Model extends Observable {
 	 * That needs to be done in order to ensure that other features which use `deleteContent()` will work well with tables.
 	 *
 	 * @fires deleteContent
-	 * @param {module:engine/model/selection~Selection|module:engine/model/documentselection~DocumentSelection} selection
-	 * Selection of which the content should be deleted.
-	 * @param {Object} [options]
-	 * @param {Boolean} [options.leaveUnmerged=false] Whether to merge elements after removing the content of the selection.
+	 * @param selection Selection of which the content should be deleted.
+	 * @param options.leaveUnmerged Whether to merge elements after removing the content of the selection.
 	 *
 	 * For example `<heading1>x[x</heading1><paragraph>y]y</paragraph>` will become:
 	 *
@@ -601,7 +656,7 @@ export default class Model extends Observable {
 	 * Note: {@link module:engine/model/schema~Schema#isObject object} and {@link module:engine/model/schema~Schema#isLimit limit}
 	 * elements will not be merged.
 	 *
-	 * @param {Boolean} [options.doNotResetEntireContent=false] Whether to skip replacing the entire content with a
+	 * @param options.doNotResetEntireContent Whether to skip replacing the entire content with a
 	 * paragraph when the entire content was selected.
 	 *
 	 * For example `<heading1>[x</heading1><paragraph>y]</paragraph>` will become:
@@ -609,7 +664,7 @@ export default class Model extends Observable {
 	 * * `<paragraph>^</paragraph>` with the option disabled (`doNotResetEntireContent == false`)
 	 * * `<heading1>^</heading1>` with enabled (`doNotResetEntireContent == true`)
 	 *
-	 * @param {Boolean} [options.doNotAutoparagraph=false] Whether to create a paragraph if after content deletion selection is moved
+	 * @param options.doNotAutoparagraph Whether to create a paragraph if after content deletion selection is moved
 	 * to a place where text cannot be inserted.
 	 *
 	 * For example `<paragraph>x</paragraph>[<imageBlock src="foo.jpg"></imageBlock>]` will become:
@@ -621,7 +676,7 @@ export default class Model extends Observable {
 	 *
 	 * `[<imageBlock src="foo.jpg"></imageBlock>]` -> `<paragraph>[]</paragraph>`.
 	 *
-	 * @param {'forward'|'backward'} [options.direction='backward'] The direction in which the content is being consumed.
+	 * @param options.direction The direction in which the content is being consumed.
 	 * Deleting backward corresponds to using the <kbd>Backspace</kbd> key, while deleting content forward corresponds to
 	 * the <kbd>Shift</kbd>+<kbd>Backspace</kbd> keystroke.
 	 */
@@ -632,6 +687,7 @@ export default class Model extends Observable {
 			doNotResetEntireContent?: boolean;
 			doNotAutoparagraph?: boolean;
 			direction?: 'forward' | 'backward';
+			[ i: string ]: unknown;
 		}
 	): void {
 		deleteContent( this, selection, options );
@@ -660,12 +716,10 @@ export default class Model extends Observable {
 	 * **Note:** if you extend a forward selection in a backward direction you will in fact shrink it.
 	 *
 	 * @fires modifySelection
-	 * @param {module:engine/model/selection~Selection|module:engine/model/documentselection~DocumentSelection} selection
-	 * The selection to modify.
-	 * @param {Object} [options]
-	 * @param {'forward'|'backward'} [options.direction='forward'] The direction in which the selection should be modified.
-	 * @param {'character'|'codePoint'|'word'} [options.unit='character'] The unit by which selection should be modified.
-	 * @param {Boolean} [options.treatEmojiAsSingleUnit=false] Whether multi-characer emoji sequences should be handled as single unit.
+	 * @param selection The selection to modify.
+	 * @param options.direction The direction in which the selection should be modified.
+	 * @param options.unit The unit by which selection should be modified.
+	 * @param options.treatEmojiAsSingleUnit Whether multi-characer emoji sequences should be handled as single unit.
 	 */
 	public modifySelection(
 		selection: ModelSelection | DocumentSelection,
@@ -686,8 +740,8 @@ export default class Model extends Observable {
 	 * ```html
 	 * <paragraph>x</paragraph>
 	 * <blockQuote>
-	 *	<paragraph>y</paragraph>
-	 *	<heading1>fir[st</heading1>
+	 * 	<paragraph>y</paragraph>
+	 * 	<heading1>fir[st</heading1>
 	 * </blockQuote>
 	 * <paragraph>se]cond</paragraph>
 	 * <paragraph>z</paragraph>
@@ -697,15 +751,13 @@ export default class Model extends Observable {
 	 *
 	 * ```html
 	 * <blockQuote>
-	 *	<heading1>st</heading1>
+	 * 	<heading1>st</heading1>
 	 * </blockQuote>
 	 * <paragraph>se</paragraph>
 	 * ```
 	 *
 	 * @fires getSelectedContent
-	 * @param {module:engine/model/selection~Selection|module:engine/model/documentselection~DocumentSelection} selection
-	 * The selection of which content will be returned.
-	 * @returns {module:engine/model/documentfragment~DocumentFragment}
+	 * @param selection The selection of which content will be returned.
 	 */
 	public getSelectedContent( selection: ModelSelection | DocumentSelection ): ModelDocumentFragment {
 		return getSelectedContent( this, selection );
@@ -727,15 +779,16 @@ export default class Model extends Observable {
 	 * However, a range containing an `<imageBlock></imageBlock>` (which would normally be marked in the schema as an object element)
 	 * is considered non-empty.
 	 *
-	 * @param {module:engine/model/range~Range|module:engine/model/element~Element} rangeOrElement Range or element to check.
-	 * @param {Object} [options]
-	 * @param {Boolean} [options.ignoreWhitespaces] Whether text node with whitespaces only should be considered empty.
-	 * @param {Boolean} [options.ignoreMarkers] Whether markers should be ignored.
-	 * @returns {Boolean}
+	 * @param rangeOrElement Range or element to check.
+	 * @param options.ignoreWhitespaces Whether text node with whitespaces only should be considered empty.
+	 * @param options.ignoreMarkers Whether markers should be ignored.
 	 */
 	public hasContent(
 		rangeOrElement: ModelRange | ModelElement | ModelDocumentFragment,
-		options: { ignoreWhitespaces?: boolean; ignoreMarkers?: boolean } = {}
+		options: {
+			ignoreWhitespaces?: boolean;
+			ignoreMarkers?: boolean;
+		} = {}
 	): boolean {
 		const range = rangeOrElement instanceof ModelRange ? rangeOrElement : ModelRange._createIn( rangeOrElement );
 
@@ -777,15 +830,13 @@ export default class Model extends Observable {
 	 * Note: This method is also available as
 	 * {@link module:engine/model/writer~Writer#createPositionFromPath `Writer#createPositionFromPath()`}.
 	 *
-	 * @param {module:engine/model/element~Element|module:engine/model/documentfragment~DocumentFragment} root Root of the position.
-	 * @param {Array.<Number>} path Position path. See {@link module:engine/model/position~Position#path}.
-	 * @param {module:engine/model/position~PositionStickiness} [stickiness='toNone'] Position stickiness.
-	 * See {@link module:engine/model/position~PositionStickiness}.
-	 * @returns {module:engine/model/position~Position}
+	 * @param root Root of the position.
+	 * @param path Position path. See {@link module:engine/model/position~Position#path}.
+	 * @param stickiness Position stickiness. See {@link module:engine/model/position~PositionStickiness}.
 	 */
 	public createPositionFromPath(
 		root: ModelElement | ModelDocumentFragment,
-		path: Array<number>,
+		path: ReadonlyArray<number>,
 		stickiness?: PositionStickiness
 	): ModelPosition {
 		return new ModelPosition( root, path, stickiness );
@@ -808,13 +859,12 @@ export default class Model extends Observable {
 	 * Note: This method is also available as
 	 * {@link module:engine/model/writer~Writer#createPositionAt `Writer#createPositionAt()`},
 	 *
-	 * @param {module:engine/model/item~Item|module:engine/model/position~Position} itemOrPosition
-	 * @param {Number|'end'|'before'|'after'} [offset] Offset or one of the flags. Used only when
-	 * first parameter is a {@link module:engine/model/item~Item model item}.
+	 * @param itemOrPosition
+	 * @param offset Offset or one of the flags. Used only when first parameter is a {@link module:engine/model/item~Item model item}.
 	 */
 	public createPositionAt(
 		itemOrPosition: Item | ModelPosition | ModelDocumentFragment,
-		offset?: number | 'end' | 'before' | 'after'
+		offset?: PositionOffset
 	): ModelPosition {
 		return ModelPosition._createAt( itemOrPosition, offset );
 	}
@@ -825,8 +875,7 @@ export default class Model extends Observable {
 	 * Note: This method is also available as
 	 * {@link module:engine/model/writer~Writer#createPositionAfter `Writer#createPositionAfter()`}.
 	 *
-	 * @param {module:engine/model/item~Item} item Item after which the position should be placed.
-	 * @returns {module:engine/model/position~Position}
+	 * @param item Item after which the position should be placed.
 	 */
 	public createPositionAfter( item: Item ): ModelPosition {
 		return ModelPosition._createAfter( item );
@@ -838,8 +887,7 @@ export default class Model extends Observable {
 	 * Note: This method is also available as
 	 * {@link module:engine/model/writer~Writer#createPositionBefore `Writer#createPositionBefore()`}.
 	 *
-	 * @param {module:engine/model/item~Item} item Item before which the position should be placed.
-	 * @returns {module:engine/model/position~Position}
+	 * @param item Item before which the position should be placed.
 	 */
 	public createPositionBefore( item: Item ): ModelPosition {
 		return ModelPosition._createBefore( item );
@@ -851,14 +899,14 @@ export default class Model extends Observable {
 	 * Note: This method is also available as
 	 * {@link module:engine/model/writer~Writer#createRange `Writer#createRange()`}:
 	 *
-	 *		model.change( writer => {
-	 *			const range = writer.createRange( start, end );
-	 *		} );
+	 * ```ts
+	 * model.change( writer => {
+	 * 	const range = writer.createRange( start, end );
+	 * } );
+	 * ```
 	 *
-	 * @param {module:engine/model/position~Position} start Start position.
-	 * @param {module:engine/model/position~Position} [end] End position. If not set, the range will be collapsed
-	 * to the `start` position.
-	 * @returns {module:engine/model/range~Range}
+	 * @param start Start position.
+	 * @param end End position. If not set, the range will be collapsed to the `start` position.
 	 */
 	public createRange( start: ModelPosition, end?: ModelPosition ): ModelRange {
 		return new ModelRange( start, end );
@@ -871,12 +919,13 @@ export default class Model extends Observable {
 	 * Note: This method is also available as
 	 * {@link module:engine/model/writer~Writer#createRangeIn `Writer#createRangeIn()`}:
 	 *
-	 *		model.change( writer => {
-	 *			const range = writer.createRangeIn( paragraph );
-	 *		} );
+	 * ```ts
+	 * model.change( writer => {
+	 * 	const range = writer.createRangeIn( paragraph );
+	 * } );
+	 * ```
 	 *
-	 * @param {module:engine/model/element~Element} element Element which is a parent for the range.
-	 * @returns {module:engine/model/range~Range}
+	 * @param element Element which is a parent for the range.
 	 */
 	public createRangeIn( element: ModelElement | ModelDocumentFragment ): ModelRange {
 		return ModelRange._createIn( element );
@@ -888,12 +937,13 @@ export default class Model extends Observable {
 	 * Note: This method is also available on `writer` instance as
 	 * {@link module:engine/model/writer~Writer#createRangeOn `Writer.createRangeOn()`}:
 	 *
-	 *		model.change( writer => {
-	 *			const range = writer.createRangeOn( paragraph );
-	 *		} );
+	 * ```ts
+	 * model.change( writer => {
+	 * 	const range = writer.createRangeOn( paragraph );
+	 * } );
+	 * ```
 	 *
-	 * @param {module:engine/model/item~Item} item
-	 * @returns {module:engine/model/range~Range}
+	 * @param item
 	 */
 	public createRangeOn( item: Item ): ModelRange {
 		return ModelRange._createOn( item );
@@ -906,54 +956,76 @@ export default class Model extends Observable {
 	 * Note: This method is also available as
 	 * {@link module:engine/model/writer~Writer#createSelection `Writer#createSelection()`}.
 	 *
-	 *		// Creates empty selection without ranges.
-	 *		const selection = writer.createSelection();
+	 * ```ts
+	 * // Creates selection at the given offset in the given element.
+	 * const paragraph = writer.createElement( 'paragraph' );
+	 * const selection = writer.createSelection( paragraph, offset );
 	 *
-	 *		// Creates selection at the given range.
-	 *		const range = writer.createRange( start, end );
-	 *		const selection = writer.createSelection( range );
+	 * // Creates a range inside an {@link module:engine/model/element~Element element} which starts before the
+	 * // first child of that element and ends after the last child of that element.
+	 * const selection = writer.createSelection( paragraph, 'in' );
 	 *
-	 *		// Creates selection at the given ranges
-	 *		const ranges = [ writer.createRange( start1, end2 ), writer.createRange( star2, end2 ) ];
-	 *		const selection = writer.createSelection( ranges );
+	 * // Creates a range on an {@link module:engine/model/item~Item item} which starts before the item and ends
+	 * // just after the item.
+	 * const selection = writer.createSelection( paragraph, 'on' );
 	 *
-	 *		// Creates selection from the other selection.
-	 *		// Note: It doesn't copies selection attributes.
-	 *		const otherSelection = writer.createSelection();
-	 *		const selection = writer.createSelection( otherSelection );
+	 * // Additional options (`'backward'`) can be specified as the last argument.
 	 *
-	 *		// Creates selection from the given document selection.
-	 *		// Note: It doesn't copies selection attributes.
-	 *		const documentSelection = model.document.selection;
-	 *		const selection = writer.createSelection( documentSelection );
+	 * // Creates backward selection.
+	 * const selection = writer.createSelection( element, 'in', { backward: true } );
+	 * ```
 	 *
-	 *		// Creates selection at the given position.
-	 *		const position = writer.createPositionFromPath( root, path );
-	 *		const selection = writer.createSelection( position );
+	 * See also: {@link #createSelection:SELECTABLE `createSelection( selectable, options )`}.
 	 *
-	 *		// Creates selection at the given offset in the given element.
-	 *		const paragraph = writer.createElement( 'paragraph' );
-	 *		const selection = writer.createSelection( paragraph, offset );
-	 *
-	 *		// Creates a range inside an {@link module:engine/model/element~Element element} which starts before the
-	 *		// first child of that element and ends after the last child of that element.
-	 *		const selection = writer.createSelection( paragraph, 'in' );
-	 *
-	 *		// Creates a range on an {@link module:engine/model/item~Item item} which starts before the item and ends
-	 *		// just after the item.
-	 *		const selection = writer.createSelection( paragraph, 'on' );
-	 *
-	 *		// Additional options (`'backward'`) can be specified as the last argument.
-	 *
-	 *		// Creates backward selection.
-	 *		const selection = writer.createSelection( range, { backward: true } );
-	 *
-	 * @param {module:engine/model/selection~Selectable} selectable
-	 * @param {Number|'before'|'end'|'after'|'on'|'in'} [optionsOrPlaceOrOffset] Sets place or offset of the selection.
-	 * @param {Object} [options]
-	 * @param {Boolean} [options.backward] Sets this selection instance to be backward.
-	 * @returns {module:engine/model/selection~Selection}
+	 * @label NODE_OFFSET
 	 */
+	public createSelection( selectable: Node, placeOrOffset: PlaceOrOffset, options?: { backward?: boolean } ): ModelSelection;
+
+	/**
+	 * Creates a new selection instance based on the given {@link module:engine/model/selection~Selectable selectable}
+	 * or creates an empty selection if no arguments were passed.
+	 *
+	 * Note: This method is also available as
+	 * {@link module:engine/model/writer~Writer#createSelection `Writer#createSelection()`}.
+	 *
+	 * ```ts
+	 * // Creates empty selection without ranges.
+	 * const selection = writer.createSelection();
+	 *
+	 * // Creates selection at the given range.
+	 * const range = writer.createRange( start, end );
+	 * const selection = writer.createSelection( range );
+	 *
+	 * // Creates selection at the given ranges
+	 * const ranges = [ writer.createRange( start1, end2 ), writer.createRange( star2, end2 ) ];
+	 * const selection = writer.createSelection( ranges );
+	 *
+	 * // Creates selection from the other selection.
+	 * // Note: It doesn't copies selection attributes.
+	 * const otherSelection = writer.createSelection();
+	 * const selection = writer.createSelection( otherSelection );
+	 *
+	 * // Creates selection from the given document selection.
+	 * // Note: It doesn't copies selection attributes.
+	 * const documentSelection = model.document.selection;
+	 * const selection = writer.createSelection( documentSelection );
+	 *
+	 * // Creates selection at the given position.
+	 * const position = writer.createPositionFromPath( root, path );
+	 * const selection = writer.createSelection( position );
+	 *
+	 * // Additional options (`'backward'`) can be specified as the last argument.
+	 *
+	 * // Creates backward selection.
+	 * const selection = writer.createSelection( range, { backward: true } );
+	 * ```
+	 *
+	 * See also: {@link #createSelection:NODE_OFFSET `createSelection( node, placeOrOffset, options )`}.
+	 *
+	 * @label SELECTABLE
+	 */
+	public createSelection( selectable?: Exclude<Selectable, Node>, options?: { backward?: boolean } ): ModelSelection;
+
 	public createSelection( ...args: ConstructorParameters<typeof ModelSelection> ): ModelSelection {
 		return new ModelSelection( ...args );
 	}
@@ -966,10 +1038,9 @@ export default class Model extends Observable {
 	 * * {@link #change `change()`},
 	 * * {@link #enqueueChange `enqueueChange()`}.
 	 *
-	 * @param {Object} [type] {@link module:engine/model/batch~Batch#constructor The type} of the batch.
-	 * @returns {module:engine/model/batch~Batch}
+	 * @param type {@link module:engine/model/batch~Batch#constructor The type} of the batch.
 	 */
-	public createBatch( type: BatchType ): Batch {
+	public createBatch( type?: BatchType ): Batch {
 		return new Batch( type );
 	}
 
@@ -978,8 +1049,7 @@ export default class Model extends Observable {
 	 *
 	 * This is an alias for {@link module:engine/model/operation/operationfactory~OperationFactory.fromJSON `OperationFactory.fromJSON()`}.
 	 *
-	 * @param {Object} json Deserialized JSON object.
-	 * @returns {module:engine/model/operation/operation~Operation}
+	 * @param json Deserialized JSON object.
 	 */
 	public createOperationFromJSON( json: unknown ): Operation {
 		return OperationFactory.fromJSON( json, this.document );
@@ -997,8 +1067,6 @@ export default class Model extends Observable {
 	 * Common part of {@link module:engine/model/model~Model#change} and {@link module:engine/model/model~Model#enqueueChange}
 	 * which calls callbacks and returns array of values returned by these callbacks.
 	 *
-	 * @private
-	 * @returns {Array.<*>} Array of values returned by callbacks.
 	 */
 	private _runPendingChanges() {
 		const ret = [];
@@ -1029,104 +1097,153 @@ export default class Model extends Observable {
 
 		return ret;
 	}
-
-	/**
-	 * Fired when entering the outermost {@link module:engine/model/model~Model#enqueueChange} or
-	 * {@link module:engine/model/model~Model#change} block.
-	 *
-	 * @protected
-	 * @event _beforeChanges
-	 */
-
-	/**
-	 * Fired when leaving the outermost {@link module:engine/model/model~Model#enqueueChange} or
-	 * {@link module:engine/model/model~Model#change} block.
-	 *
-	 * @protected
-	 * @event _afterChanges
-	 */
-
-	/**
-	 * Fired every time any {@link module:engine/model/operation/operation~Operation operation} is applied on the model
-	 * using {@link #applyOperation}.
-	 *
-	 * Note that this event is suitable only for very specific use-cases. Use it if you need to listen to every single operation
-	 * applied on the document. However, in most cases {@link module:engine/model/document~Document#event:change} should
-	 * be used.
-	 *
-	 * A few callbacks are already added to this event by engine internal classes:
-	 *
-	 * * with `highest` priority operation is validated,
-	 * * with `normal` priority operation is executed,
-	 * * with `low` priority the {@link module:engine/model/document~Document} updates its version,
-	 * * with `low` priority {@link module:engine/model/liveposition~LivePosition} and {@link module:engine/model/liverange~LiveRange}
-	 * update themselves.
-	 *
-	 * @event applyOperation
-	 * @param {Array} args Arguments of the `applyOperation` which is an array with a single element - applied
-	 * {@link module:engine/model/operation/operation~Operation operation}.
-	 */
-
-	/**
-	 * Event fired when {@link #insertContent} method is called.
-	 *
-	 * The {@link #insertContent default action of that method} is implemented as a
-	 * listener to this event so it can be fully customized by the features.
-	 *
-	 * **Note** The `selectable` parameter for the {@link #insertContent} is optional. When `undefined` value is passed the method uses
-	 * {@link module:engine/model/document~Document#selection document selection}.
-	 *
-	 * @event insertContent
-	 * @param {Array} args The arguments passed to the original method.
-	 */
-
-	/**
-	 * Event fired when the {@link #insertObject} method is called.
-	 *
-	 * The {@link #insertObject default action of that method} is implemented as a
-	 * listener to this event so it can be fully customized by the features.
-	 *
-	 * **Note** The `selectable` parameter for the {@link #insertObject} is optional. When `undefined` value is passed the method uses
-	 * {@link module:engine/model/document~Document#selection document selection}.
-	 *
-	 * @event insertObject
-	 * @param {Array} args The arguments passed to the original method.
-	 */
-
-	/**
-	 * Event fired when {@link #deleteContent} method is called.
-	 *
-	 * The {@link #deleteContent default action of that method} is implemented as a
-	 * listener to this event so it can be fully customized by the features.
-	 *
-	 * @event deleteContent
-	 * @param {Array} args The arguments passed to the original method.
-	 */
-
-	/**
-	 * Event fired when {@link #modifySelection} method is called.
-	 *
-	 * The {@link #modifySelection default action of that method} is implemented as a
-	 * listener to this event so it can be fully customized by the features.
-	 *
-	 * @event modifySelection
-	 * @param {Array} args The arguments passed to the original method.
-	 */
-
-	/**
-	 * Event fired when {@link #getSelectedContent} method is called.
-	 *
-	 * The {@link #getSelectedContent default action of that method} is implemented as a
-	 * listener to this event so it can be fully customized by the features.
-	 *
-	 * @event getSelectedContent
-	 * @param {Array} args The arguments passed to the original method.
-	 */
 }
 
+/**
+ * Normalizes a selectable to a Selection or DocumentSelection.
+ */
+function normalizeSelectable(
+	selectable?: Selectable,
+	placeOrOffset?: PlaceOrOffset | null
+): ModelSelection | DocumentSelection | undefined {
+	if ( !selectable ) {
+		return;
+	}
+
+	if ( selectable instanceof ModelSelection || selectable instanceof DocumentSelection ) {
+		return selectable;
+	}
+
+	if ( selectable instanceof Node ) {
+		return new ModelSelection( selectable, placeOrOffset! );
+	}
+
+	return new ModelSelection( selectable );
+}
+
+/**
+ * Fired when entering the outermost {@link module:engine/model/model~Model#enqueueChange} or
+ * {@link module:engine/model/model~Model#change} block.
+ *
+ * @internal
+ * @eventName ~Model#_beforeChanges
+ */
+export type BeforeChangesEvent = {
+	name: '_beforeChanges';
+	args: [];
+};
+
+/**
+ * Fired when leaving the outermost {@link module:engine/model/model~Model#enqueueChange} or
+ * {@link module:engine/model/model~Model#change} block.
+ *
+ * @internal
+ * @eventName ~Model#_afterChanges
+ */
+export type AfterChangesEvent = {
+	name: '_afterChanges';
+	args: [];
+};
+
+/**
+ * Fired every time any {@link module:engine/model/operation/operation~Operation operation} is applied on the model
+ * using {@link ~Model#applyOperation}.
+ *
+ * Note that this event is suitable only for very specific use-cases. Use it if you need to listen to every single operation
+ * applied on the document. However, in most cases {@link module:engine/model/document~Document#event:change} should
+ * be used.
+ *
+ * A few callbacks are already added to this event by engine internal classes:
+ *
+ * * with `highest` priority operation is validated,
+ * * with `normal` priority operation is executed,
+ * * with `low` priority the {@link module:engine/model/document~Document} updates its version,
+ * * with `low` priority {@link module:engine/model/liveposition~LivePosition} and {@link module:engine/model/liverange~LiveRange}
+ * update themselves.
+ *
+ * @eventName ~Model#applyOperation
+ * @param args Arguments of the `applyOperation` which is an array with a single element - applied
+ * {@link module:engine/model/operation/operation~Operation operation}.
+ */
 export type ModelApplyOperationEvent = DecoratedMethodEvent<Model, 'applyOperation'>;
-export type ModelInsertContentEvent = DecoratedMethodEvent<Model, 'insertContent'>;
-export type ModelInsertObjectEvent = DecoratedMethodEvent<Model, 'insertObject'>;
+
+/**
+ * Event fired when {@link ~Model#insertContent} method is called.
+ *
+ * The {@link ~Model#insertContent default action of that method} is implemented as a
+ * listener to this event so it can be fully customized by the features.
+ *
+ * **Note** The `selectable` parameter for the {@link ~Model#insertContent} is optional. When `undefined` value is passed the method uses
+ * {@link module:engine/model/document~Document#selection document selection}.
+ *
+ * @eventName ~Model#insertContent
+ * @param args The arguments passed to the original method.
+ */
+export type ModelInsertContentEvent = {
+	name: 'insertContent';
+	args: [ [
+		content: Item | ModelDocumentFragment,
+		selectable?: ModelSelection | DocumentSelection,
+		...rest: Array<unknown>
+	] ];
+	return: ModelRange;
+};
+
+/**
+ * Event fired when the {@link ~Model#insertObject} method is called.
+ *
+ * The {@link ~Model#insertObject default action of that method} is implemented as a
+ * listener to this event so it can be fully customized by the features.
+ *
+ * **Note** The `selectable` parameter for the {@link ~Model#insertObject} is optional. When `undefined` value is passed the method uses
+ * {@link module:engine/model/document~Document#selection document selection}.
+ *
+ * @eventName ~Model#insertObject
+ * @param args The arguments passed to the original method.
+ */
+export type ModelInsertObjectEvent = {
+	name: 'insertObject';
+	args: [ [
+		element: ModelElement,
+		selectable?: ModelSelection | DocumentSelection | null,
+		options?: {
+			findOptimalPosition?: 'auto' | 'before' | 'after';
+			setSelection?: 'on' | 'after';
+		},
+		...rest: Array<unknown>
+	] ];
+	return: ModelRange;
+};
+
+/**
+ * Event fired when {@link ~Model#deleteContent} method is called.
+ *
+ * The {@link ~Model#deleteContent default action of that method} is implemented as a
+ * listener to this event so it can be fully customized by the features.
+ *
+ * @eventName ~Model#deleteContent
+ * @param args The arguments passed to the original method.
+ */
 export type ModelDeleteContentEvent = DecoratedMethodEvent<Model, 'deleteContent'>;
+
+/**
+ * Event fired when {@link ~Model#modifySelection} method is called.
+ *
+ * The {@link ~Model#modifySelection default action of that method} is implemented as a
+ * listener to this event so it can be fully customized by the features.
+ *
+ * @eventName ~Model#modifySelection
+ * @param args The arguments passed to the original method.
+ */
 export type ModelModifySelectionEvent = DecoratedMethodEvent<Model, 'modifySelection'>;
+
+/**
+ * Event fired when {@link ~Model#getSelectedContent} method is called.
+ *
+ * The {@link ~Model#getSelectedContent default action of that method} is implemented as a
+ * listener to this event so it can be fully customized by the features.
+ *
+ * @eventName ~Model#getSelectedContent
+ * @param args The arguments passed to the original method.
+ */
 export type ModelGetSelectedContentEvent = DecoratedMethodEvent<Model, 'getSelectedContent'>;

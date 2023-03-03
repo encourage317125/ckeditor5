@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -7,19 +7,17 @@
  * @module clipboard/pasteplaintext
  */
 
-import Plugin, { type PluginDependencies } from '@ckeditor/ckeditor5-core/src/plugin';
+import { Plugin, type PluginDependencies } from '@ckeditor/ckeditor5-core';
+
+import type { DocumentFragment, Schema, ViewDocumentKeyDownEvent } from '@ckeditor/ckeditor5-engine';
 
 import ClipboardObserver from './clipboardobserver';
 import ClipboardPipeline, { type ClipboardContentInsertionEvent } from './clipboardpipeline';
-import type { ViewDocumentKeyEvent } from '@ckeditor/ckeditor5-engine/src/view/observer/keyobserver';
-import type { DocumentFragment, Schema } from '@ckeditor/ckeditor5-engine';
 
 /**
  * The plugin detects the user's intention to paste plain text.
  *
  * For example, it detects the <kbd>Ctrl/Cmd</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd> keystroke.
- *
- * @extends module:core/plugin~Plugin
  */
 export default class PastePlainText extends Plugin {
 	/**
@@ -50,7 +48,7 @@ export default class PastePlainText extends Plugin {
 
 		view.addObserver( ClipboardObserver );
 
-		this.listenTo<ViewDocumentKeyEvent>( viewDocument, 'keydown', ( evt, data ) => {
+		this.listenTo<ViewDocumentKeyDownEvent>( viewDocument, 'keydown', ( evt, data ) => {
 			shiftPressed = data.shiftKey;
 		} );
 
@@ -87,12 +85,10 @@ export default class PastePlainText extends Plugin {
 	}
 }
 
-// Returns true if specified `documentFragment` represents a plain text.
-//
-// @param {module:engine/view/documentfragment~DocumentFragment} documentFragment
-// @param {module:engine/model/schema~Schema} schema
-// @returns {Boolean}
-function isPlainTextFragment( documentFragment: DocumentFragment, schema: Schema ) {
+/**
+ * Returns true if specified `documentFragment` represents a plain text.
+ */
+function isPlainTextFragment( documentFragment: DocumentFragment, schema: Schema ): boolean {
 	if ( documentFragment.childCount > 1 ) {
 		return false;
 	}

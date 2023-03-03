@@ -5,9 +5,7 @@ menu-title: Document title
 
 # Document title
 
-The title feature enables support for adding the title field to your document. It helps ensure that there will always be a single title field at the beginning of the document.
-
-This feature can be used to implement a rich-text editor with a clear division of content into the title and body sections, similar to solutions available in Medium, Grammarly, Slack post editor or some content management systems.
+The title feature lets you add a single title field at the beginning of your document. This way you can clearly divide your content into the title and body sections.
 
 ## Demo
 
@@ -15,12 +13,9 @@ Use the editor to create a document with clearly separated title and body sectio
 
 {@snippet features/title}
 
-## Related features
-
-There are more CKEditor 5 features that can help you structure your document better:
-* {@link features/headings Headings} &ndash; Divide your content into sections.
-* {@link features/indent Block indentation} &ndash; Organize your content into visually separated blocks, indent crucial paragraphs, etc.
-* {@link features/editor-placeholder Editor placeholder} &ndash; Set placeholder text to display when the content is empty. It helps users locate the editor in the application and prompts to input the content.
+<info-box info>
+	This demo only presents a very specific, limited set of features. Visit the {@link examples/builds/full-featured-editor full-featured editor example} to see more in action.
+</info-box>
 
 ## Keyboard navigation
 
@@ -35,17 +30,21 @@ To change the title placeholder, use the {@link module:heading/title~TitleConfig
 ```js
 ClassicEditor
     .create( document.querySelector( '#editor' ), {
-        plugins: [ Title, ... ],
+        plugins: [ Title, /* ... */ ],
         title: {
             placeholder: 'My custom placeholder for the title'
         },
         placeholder: 'My custom placeholder for the body'
     } )
-    .then( ... )
-    .catch( ... );
+    .then( /* ... */ )
+    .catch( /* ... */ );
 ```
 
 ## Installation
+
+<info-box info>
+	This feature is enabled by default in all {@link installation/getting-started/predefined-builds predefined builds}.
+</info-box>
 
 To add this feature to your editor, install the [`@ckeditor/ckeditor5-heading`](https://www.npmjs.com/package/@ckeditor/ckeditor5-heading) package:
 
@@ -60,14 +59,14 @@ import Title from '@ckeditor/ckeditor5-heading/src/title';
 
 ClassicEditor
     .create( document.querySelector( '#editor' ), {
-        plugins: [ Title, ... ]
+        plugins: [ Title, /* ... */ ]
     } )
-    .then( ... )
-    .catch( ... );
+    .then( /* ... */ )
+    .catch( /* ... */ );
 ```
 
 <info-box info>
-	Read more about {@link installation/getting-started/installing-plugins installing plugins}.
+	Read more about {@link installation/plugins/installing-plugins installing plugins}.
 </info-box>
 
 ## HTML structure
@@ -91,9 +90,16 @@ In the CKEditor 5 data model the document title is represented as follows:
 ```
 
 <info-box>
-	We recommend using the official {@link framework/guides/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
+
+## Related features
+
+CKEditor 5 has more features that can help you structure your document better:
+* {@link features/headings Headings} &ndash; Divide your content into sections.
+* {@link features/indent Block indentation} &ndash; Organize your content into visually separated blocks, indent crucial paragraphs, etc.
+* {@link features/editor-placeholder Editor placeholder} &ndash; Set placeholder text to display when the content is empty. It helps users locate the editor in the application and prompts to input the content.
 
 ## Contribute
 
-The source code of the feature is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-heading.
+The source code of the feature is available on GitHub at [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-heading](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-heading).

@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -9,17 +9,23 @@
 
 import View from './view';
 import BalloonPanelView, { generatePositions } from './panel/balloon/balloonpanelview';
+import type { EditorUIUpdateEvent } from './editorui/editorui';
 
-import { Emitter as DomEmitter } from '@ckeditor/ckeditor5-utils/src/dom/emittermixin';
-import { global, isVisible, first, ResizeObserver } from '@ckeditor/ckeditor5-utils';
+import {
+	DomEmitterMixin,
+	ResizeObserver,
+	first,
+	global,
+	isVisible,
+	type EventInfo,
+	type PositioningFunction
+} from '@ckeditor/ckeditor5-utils';
+
+import type { Editor } from '@ckeditor/ckeditor5-core';
+
 import { isElement, debounce, type DebouncedFunc } from 'lodash-es';
 
 import '../theme/components/tooltip/tooltip.css';
-
-import type Editor from '@ckeditor/ckeditor5-core/src/editor/editor';
-import type { EditorUIUpdateEvent } from '@ckeditor/ckeditor5-core/src/editor/editorui';
-import type EventInfo from '@ckeditor/ckeditor5-utils/src/eventinfo';
-import type { PositioningFunction } from '@ckeditor/ckeditor5-utils/src/dom/position';
 
 const BALLOON_CLASS = 'ck-tooltip';
 
@@ -27,14 +33,16 @@ const BALLOON_CLASS = 'ck-tooltip';
  * A tooltip manager class for the UI of the editor.
  *
  * **Note**: Most likely you do not have to use the `TooltipManager` API listed below in order to display tooltips. Popular
- * {@glink framework/guides/architecture/ui-library UI components} support tooltips out-of-the-box via observable properties
+ * {@glink framework/architecture/ui-library UI components} support tooltips out-of-the-box via observable properties
  * (see {@link module:ui/button/buttonview~ButtonView#tooltip} and {@link module:ui/button/buttonview~ButtonView#tooltipPosition}).
  *
  * # Displaying tooltips
  *
  * To display a tooltip, set `data-cke-tooltip-text` attribute on any DOM element:
  *
- *		domElement.dataset.ckeTooltipText = 'My tooltip';
+ * ```ts
+ * domElement.dataset.ckeTooltipText = 'My tooltip';
+ * ```
  *
  * The tooltip will show up whenever the user moves the mouse over the element or the element gets focus in DOM.
  *
@@ -42,16 +50,19 @@ const BALLOON_CLASS = 'ck-tooltip';
  *
  * To change the position of the tooltip, use the `data-cke-tooltip-position` attribute (`s`, `se`, `sw`, `n`, `e`, or `w`):
  *
- *		domElement.dataset.ckeTooltipText = 'Tooltip to the north';
- *		domElement.dataset.ckeTooltipPosition = 'n';
+ * ```ts
+ * domElement.dataset.ckeTooltipText = 'Tooltip to the north';
+ * domElement.dataset.ckeTooltipPosition = 'n';
+ * ```
  *
  * # Disabling tooltips
  *
  * In order to disable the tooltip  temporarily, use the `data-cke-tooltip-disabled` attribute:
  *
- *		domElement.dataset.ckeTooltipText = 'Disabled. For now.';
- *		domElement.dataset.ckeTooltipDisabled = 'true';
- *
+ * ```ts
+ * domElement.dataset.ckeTooltipText = 'Disabled. For now.';
+ * domElement.dataset.ckeTooltipDisabled = 'true';
+ * ```
  *
  * # Styling tooltips
  *
@@ -60,35 +71,61 @@ const BALLOON_CLASS = 'ck-tooltip';
  * If your tooltip requires custom styling, using `data-cke-tooltip-class` attribute will add additional class to the balloon
  * displaying the tooltip:
  *
- *		domElement.dataset.ckeTooltipText = 'Tooltip with a red text';
- *		domElement.dataset.ckeTooltipClass = 'my-class';
+ * ```ts
+ * domElement.dataset.ckeTooltipText = 'Tooltip with a red text';
+ * domElement.dataset.ckeTooltipClass = 'my-class';
+ * ```
  *
- *		.ck.ck-tooltip.my-class { color: red }
+ * ```css
+ * .ck.ck-tooltip.my-class { color: red }
+ * ```
  *
  * **Note**: This class is a singleton. All editor instances re-use the same instance loaded by
- * {@link module:core/editor/editorui~EditorUI} of the first editor.
- *
- * @mixes module:utils/domemittermixin~DomEmitterMixin
+ * {@link module:ui/editorui/editorui~EditorUI} of the first editor.
  */
-export default class TooltipManager extends DomEmitter {
+export default class TooltipManager extends DomEmitterMixin() {
+	/**
+	 * The view rendering text of the tooltip.
+	 */
 	public readonly tooltipTextView!: View & { text: string };
+
+	/**
+	 * The instance of the balloon panel that renders and positions the tooltip.
+	 */
 	public readonly balloonPanelView!: BalloonPanelView;
 
 	/**
 	 * A set of default {@link module:utils/dom/position~PositioningFunction positioning functions} used by the `TooltipManager`
 	 * to pin tooltips in different positions.
-	 *
-	 * @member {Object.<String,module:utils/dom/position~PositioningFunction>}
-	 * module:ui/tooltipmanager~TooltipManager.defaultBalloonPositions
 	 */
 	public static defaultBalloonPositions = generatePositions( {
 		heightOffset: 5,
 		sideOffset: 13
 	} );
 
-	private _currentElementWithTooltip!: HTMLElement | null;
-	private _currentTooltipPosition!: TooltipPosition | null;
-	private _resizeObserver!: ResizeObserver | null;
+	/**
+	 * Stores the reference to the DOM element the tooltip is attached to. `null` when there's no tooltip
+	 * in the UI.
+	 */
+	private _currentElementWithTooltip: HTMLElement | null = null;
+
+	/**
+	 * Stores the current tooltip position. `null` when there's no tooltip in the UI.
+	 */
+	private _currentTooltipPosition: TooltipPosition | null = null;
+
+	/**
+	 * An instance of the resize observer that keeps track on target element visibility,
+	 * when it hides the tooltip should also disappear.
+	 *
+	 * {@link module:core/editor/editorconfig~EditorConfig#balloonToolbar configuration}.
+	 */
+	private _resizeObserver: ResizeObserver | null = null;
+
+	/**
+	 * A debounced version of {@link #_pinTooltip}. Tooltips show with a delay to avoid flashing and
+	 * to improve the UX.
+	 */
 	private _pinTooltipDebounced!: DebouncedFunc<( targetDomElement: HTMLElement, data: TooltipData ) => void>;
 
 	private readonly _watchdogExcluded!: true;
@@ -96,25 +133,17 @@ export default class TooltipManager extends DomEmitter {
 	/**
 	 * A set of editors the single tooltip manager instance must listen to.
 	 * This is mostly to handle `EditorUI#update` listeners from individual editors.
-	 *
-	 * @private
-	 * @member {Set.<module:core/editor/editor~Editor>} module:ui/tooltipmanager~TooltipManager._editors
 	 */
 	private static _editors = new Set<Editor>();
 
 	/**
 	 * A reference to the `TooltipManager` instance. The class is a singleton and as such,
 	 * successive attempts at creating instances should return this instance.
-	 *
-	 * @private
-	 * @member {module:ui/tooltipmanager~TooltipManager} module:ui/tooltipmanager~TooltipManager._instance
 	 */
 	private static _instance: TooltipManager | null = null;
 
 	/**
 	 * Creates an instance of the tooltip manager.
-	 *
-	 * @param {module:core/editor/editor~Editor} editor
 	 */
 	constructor( editor: Editor ) {
 		super();
@@ -129,12 +158,6 @@ export default class TooltipManager extends DomEmitter {
 
 		TooltipManager._instance = this;
 
-		/**
-		 * The view rendering text of the tooltip.
-		 *
-		 * @readonly
-		 * @member {module:ui/view~View} #tooltipTextView
-		 */
 		this.tooltipTextView = new View( editor.locale ) as any;
 		this.tooltipTextView.set( 'text', '' );
 		this.tooltipTextView.setTemplate( {
@@ -152,55 +175,10 @@ export default class TooltipManager extends DomEmitter {
 			]
 		} );
 
-		/**
-		 * The instance of the balloon panel that renders and positions the tooltip.
-		 *
-		 * @readonly
-		 * @member {module:ui/panel/balloon/balloonpanelview~BalloonPanelView} #balloonPanelView
-		 */
 		this.balloonPanelView = new BalloonPanelView( editor.locale );
 		this.balloonPanelView.class = BALLOON_CLASS;
 		this.balloonPanelView.content.add( this.tooltipTextView );
 
-		/**
-		 * An instance of the resize observer that keeps track on target element visibility,
-		 * when it hides the tooltip should also disappear.
-		 *
-		 * {@link module:core/editor/editorconfig~EditorConfig#balloonToolbar configuration}.
-		 *
-		 * @protected
-		 * @member {module:utils/dom/resizeobserver~ResizeObserver|null}
-		 *
-		 */
-		this._resizeObserver = null;
-
-		/**
-		 * Stores the reference to the DOM element the tooltip is attached to. `null` when there's no tooltip
-		 * in the UI.
-		 *
-		 * @private
-		 * @readonly
-		 * @member {HTMLElement|null} #_currentElementWithTooltip
-		 */
-		this._currentElementWithTooltip = null;
-
-		/**
-		 * Stores the current tooltip position. `null` when there's no tooltip in the UI.
-		 *
-		 * @private
-		 * @readonly
-		 * @member {String|null} #_currentTooltipPosition
-		 */
-		this._currentTooltipPosition = null;
-
-		/**
-		 * A debounced version of {@link #_pinTooltip}. Tooltips show with a delay to avoid flashing and
-		 * to improve the UX.
-		 *
-		 * @private
-		 * @readonly
-		 * @member {Function} #_pinTooltipDebounced
-		 */
 		this._pinTooltipDebounced = debounce( this._pinTooltip, 600 );
 
 		this.listenTo( global.document, 'mouseenter', this._onEnterOrFocus.bind( this ), { useCapture: true } );
@@ -224,7 +202,7 @@ export default class TooltipManager extends DomEmitter {
 	 *
 	 * **Note**: The manager singleton cannot be destroyed until all editors that use it are destroyed.
 	 *
-	 * @param {module:core/editor/editor~Editor} editor The editor the manager was created for.
+	 * @param editor The editor the manager was created for.
 	 */
 	public destroy( editor: Editor ): void {
 		const editorBodyViewCollection = editor.ui.view && editor.ui.view.body;
@@ -251,9 +229,8 @@ export default class TooltipManager extends DomEmitter {
 	 * Returns {@link #balloonPanelView} {@link module:utils/dom/position~PositioningFunction positioning functions} for a given position
 	 * name.
 	 *
-	 * @static
-	 * @param {String} position Name of the position (`s`, `se`, `sw`, `n`, `e`, or `w`).
-	 * @returns {Array.<module:utils/dom/position~PositioningFunction>} Positioning functions to be used by the {@link #balloonPanelView}.
+	 * @param position Name of the position (`s`, `se`, `sw`, `n`, `e`, or `w`).
+	 * @returns Positioning functions to be used by the {@link #balloonPanelView}.
 	 */
 	public static getPositioningFunctions( position: TooltipPosition ): Array<PositioningFunction> {
 		const defaultPositions = TooltipManager.defaultBalloonPositions;
@@ -276,9 +253,8 @@ export default class TooltipManager extends DomEmitter {
 	/**
 	 * Handles displaying tooltips on `mouseenter` and `focus` in DOM.
 	 *
-	 * @private
-	 * @param {module:utils/eventinfo~EventInfo} evt An object containing information about the fired event.
-	 * @param {Event} domEvent The DOM event.
+	 * @param evt An object containing information about the fired event.
+	 * @param domEvent The DOM event.
 	 */
 	private _onEnterOrFocus( evt: unknown, { target }: any ) {
 		const elementWithTooltipAttribute = getDescendantWithTooltip( target );
@@ -303,9 +279,8 @@ export default class TooltipManager extends DomEmitter {
 	/**
 	 * Handles hiding tooltips on `mouseleave` and `blur` in DOM.
 	 *
-	 * @private
-	 * @param {module:utils/eventinfo~EventInfo} evt An object containing information about the fired event.
-	 * @param {Event} domEvent The DOM event.
+	 * @param evt An object containing information about the fired event.
+	 * @param domEvent The DOM event.
 	 */
 	private _onLeaveOrBlur( evt: EventInfo, { target, relatedTarget }: any ) {
 		if ( evt.name === 'mouseleave' ) {
@@ -347,9 +322,8 @@ export default class TooltipManager extends DomEmitter {
 	/**
 	 * Handles hiding tooltips on `scroll` in DOM.
 	 *
-	 * @private
-	 * @param {module:utils/eventinfo~EventInfo} evt An object containing information about the fired event.
-	 * @param {Event} domEvent The DOM event.
+	 * @param evt An object containing information about the fired event.
+	 * @param domEvent The DOM event.
 	 */
 	private _onScroll( evt: unknown, { target }: any ) {
 		// No tooltip, no reason to react on scroll.
@@ -370,12 +344,9 @@ export default class TooltipManager extends DomEmitter {
 	/**
 	 * Pins the tooltip to a specific DOM element.
 	 *
-	 * @private
-	 * @param {Element} targetDomElement
-	 * @param {Object} options
-	 * @param {String} options.text Text of the tooltip to display.
-	 * @param {String} options.position The position of the tooltip.
-	 * @param {String} options.cssClass Additional CSS class of the balloon with the tooltip.
+	 * @param options.text Text of the tooltip to display.
+	 * @param options.position The position of the tooltip.
+	 * @param options.cssClass Additional CSS class of the balloon with the tooltip.
 	 */
 	private _pinTooltip(
 		targetDomElement: HTMLElement,
@@ -420,8 +391,6 @@ export default class TooltipManager extends DomEmitter {
 
 	/**
 	 * Unpins the tooltip and cancels all queued pinning.
-	 *
-	 * @private
 	 */
 	private _unpinTooltip() {
 		this._pinTooltipDebounced.cancel();
@@ -444,8 +413,6 @@ export default class TooltipManager extends DomEmitter {
 	 * Updates the position of the tooltip so it stays in sync with the element it is pinned to.
 	 *
 	 * Hides the tooltip when the element is no longer visible in DOM.
-	 *
-	 * @private
 	 */
 	private _updateTooltipPosition() {
 		// This could happen if the tooltip was attached somewhere in a contextual content toolbar and the toolbar

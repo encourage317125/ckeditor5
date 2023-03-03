@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -53,7 +53,7 @@ import isVisible from '@ckeditor/ckeditor5-utils/src/dom/isvisible';
  *			}
  *		} );
  *
- * Check out the {@glink framework/guides/deep-dive/ui/focus-tracking "Deep dive into focus tracking" guide} to learn more.
+ * Check out the {@glink framework/deep-dive/ui/focus-tracking "Deep dive into focus tracking" guide} to learn more.
  */
 export default class FocusCycler {
 	/**

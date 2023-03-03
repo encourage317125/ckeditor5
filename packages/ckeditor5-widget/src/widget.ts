@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -7,24 +7,35 @@
  * @module widget/widget
  */
 
-import Plugin, { type PluginDependencies } from '@ckeditor/ckeditor5-core/src/plugin';
-import MouseObserver, { type ViewDocumentMouseEvent } from '@ckeditor/ckeditor5-engine/src/view/observer/mouseobserver';
-import WidgetTypeAround from './widgettypearound/widgettypearound';
-import Delete from '@ckeditor/ckeditor5-typing/src/delete';
-import env from '@ckeditor/ckeditor5-utils/src/env';
-import { getLocalizedArrowKeyCodeDirection, type KeystrokeInfo } from '@ckeditor/ckeditor5-utils/src/keyboard';
+import { Plugin, type PluginDependencies } from '@ckeditor/ckeditor5-core';
 
+import {
+	MouseObserver,
+	type DomEventData,
+	type DowncastSelectionEvent,
+	type DowncastWriter,
+	type Element,
+	type Node,
+	type ViewDocumentArrowKeyEvent,
+	type ViewDocumentFragment,
+	type ViewDocumentMouseDownEvent,
+	type ViewElement
+} from '@ckeditor/ckeditor5-engine';
+
+import { Delete, type ViewDocumentDeleteEvent } from '@ckeditor/ckeditor5-typing';
+
+import {
+	env,
+	getLocalizedArrowKeyCodeDirection,
+	type EventInfo,
+	type KeystrokeInfo
+} from '@ckeditor/ckeditor5-utils';
+
+import WidgetTypeAround from './widgettypearound/widgettypearound';
 import verticalNavigationHandler from './verticalnavigation';
 import { getLabel, isWidget, WIDGET_SELECTED_CLASS_NAME } from './utils';
 
 import '../theme/widget.css';
-
-import type { DomEventData, DowncastWriter, Element, ViewDocumentFragment, ViewElement } from '@ckeditor/ckeditor5-engine';
-import type { DowncastSelectionEvent } from '@ckeditor/ckeditor5-engine/src/conversion/downcastdispatcher';
-import type { ViewDocumentArrowKeyEvent } from '@ckeditor/ckeditor5-engine/src/view/observer/arrowkeysobserver';
-import type { ViewDocumentDeleteEvent } from '@ckeditor/ckeditor5-typing/src/deleteobserver';
-import type EventInfo from '@ckeditor/ckeditor5-utils/src/eventinfo';
-import type Node from '@ckeditor/ckeditor5-engine/src/model/node';
 
 /**
  * The widget plugin. It enables base support for widgets.
@@ -38,11 +49,12 @@ import type Node from '@ckeditor/ckeditor5-engine/src/model/node';
  * {@link module:engine/view/selection~Selection#isFake fake}. Additionally, the `ck-widget_selected` CSS class
  * is added to indicate that widget has been selected.
  * * The mouse and keyboard events handling on and around widget elements.
- *
- * @extends module:core/plugin~Plugin
  */
 export default class Widget extends Plugin {
-	private _previouslySelected!: Set<ViewElement>;
+	/**
+	 * Holds previously selected widgets.
+	 */
+	private _previouslySelected = new Set<ViewElement>();
 
 	/**
 	 * @inheritDoc
@@ -65,14 +77,6 @@ export default class Widget extends Plugin {
 		const editor = this.editor;
 		const view = editor.editing.view;
 		const viewDocument = view.document;
-
-		/**
-		 * Holds previously selected widgets.
-		 *
-		 * @private
-		 * @type {Set.<module:engine/view/element~Element>}
-		 */
-		this._previouslySelected = new Set();
 
 		// Model to view selection converter.
 		// Converts selection placed over widget element to fake selection.
@@ -152,7 +156,7 @@ export default class Widget extends Plugin {
 
 		// If mouse down is pressed on widget - create selection over whole widget.
 		view.addObserver( MouseObserver );
-		this.listenTo<ViewDocumentMouseEvent>( viewDocument, 'mousedown', ( ...args ) => this._onMousedown( ...args ) );
+		this.listenTo<ViewDocumentMouseDownEvent>( viewDocument, 'mousedown', ( ...args ) => this._onMousedown( ...args ) );
 
 		// There are two keydown listeners working on different priorities. This allows other
 		// features such as WidgetTypeAround or TableKeyboard to attach their listeners in between
@@ -191,10 +195,6 @@ export default class Widget extends Plugin {
 
 	/**
 	 * Handles {@link module:engine/view/document~Document#event:mousedown mousedown} events on widget elements.
-	 *
-	 * @private
-	 * @param {module:utils/eventinfo~EventInfo} eventInfo
-	 * @param {module:engine/view/observer/domeventdata~DomEventData} domEventData
 	 */
 	private _onMousedown( eventInfo: EventInfo, domEventData: DomEventData<MouseEvent> ) {
 		const editor = this.editor;
@@ -257,10 +257,6 @@ export default class Widget extends Plugin {
 	 * * the selection is next to a widget and the widget should become selected upon the arrow key press.
 	 *
 	 * See {@link #_preventDefaultOnArrowKeyPress}.
-	 *
-	 * @private
-	 * @param {module:utils/eventinfo~EventInfo} eventInfo
-	 * @param {module:engine/view/observer/domeventdata~DomEventData} domEventData
 	 */
 	private _handleSelectionChangeOnArrowKeyPress( eventInfo: EventInfo, domEventData: DomEventData & KeystrokeInfo ) {
 		const keyCode = domEventData.keyCode;
@@ -339,10 +335,6 @@ export default class Widget extends Plugin {
 	 * container.
 	 *
 	 * See {@link #_handleSelectionChangeOnArrowKeyPress}.
-	 *
-	 * @private
-	 * @param {module:utils/eventinfo~EventInfo} eventInfo
-	 * @param {module:engine/view/observer/domeventdata~DomEventData} domEventData
 	 */
 	private _preventDefaultOnArrowKeyPress( eventInfo: EventInfo, domEventData: DomEventData ) {
 		const model = this.editor.model;
@@ -359,9 +351,8 @@ export default class Widget extends Plugin {
 	/**
 	 * Handles delete keys: backspace and delete.
 	 *
-	 * @private
-	 * @param {Boolean} isForward Set to true if delete was performed in forward direction.
-	 * @returns {Boolean|undefined} Returns `true` if keys were handled correctly.
+	 * @param isForward Set to true if delete was performed in forward direction.
+	 * @returns Returns `true` if keys were handled correctly.
 	 */
 	private _handleDelete( isForward: boolean ) {
 		// Do nothing when the read only mode is enabled.
@@ -402,8 +393,6 @@ export default class Widget extends Plugin {
 	 * Sets {@link module:engine/model/selection~Selection document's selection} over given element.
 	 *
 	 * @internal
-	 * @protected
-	 * @param {module:engine/model/element~Element} element
 	 */
 	public _setSelectionOverElement( element: Node ): void {
 		this.editor.model.change( writer => {
@@ -417,9 +406,7 @@ export default class Widget extends Plugin {
 	 * {@link module:engine/model/schema~Schema schema} as `object`.
 	 *
 	 * @internal
-	 * @protected
-	 * @param {Boolean} forward Direction of checking.
-	 * @returns {module:engine/model/element~Element|null}
+	 * @param forward Direction of checking.
 	 */
 	public _getObjectElementNextToSelection( forward: boolean ): Element | null {
 		const model = this.editor.model;
@@ -447,9 +434,6 @@ export default class Widget extends Plugin {
 
 	/**
 	 * Removes CSS class from previously selected widgets.
-	 *
-	 * @private
-	 * @param {module:engine/view/downcastwriter~DowncastWriter} writer
 	 */
 	private _clearPreviouslySelectedWidgets( writer: DowncastWriter ) {
 		for ( const widget of this._previouslySelected ) {
@@ -460,10 +444,9 @@ export default class Widget extends Plugin {
 	}
 }
 
-// Returns `true` when element is a nested editable or is placed inside one.
-//
-// @param {module:engine/view/element~Element}
-// @returns {Boolean}
+/**
+ * Returns `true` when element is a nested editable or is placed inside one.
+ */
 function isInsideNestedEditable( element: ViewElement ) {
 	let currentElement: ViewElement | ViewDocumentFragment | null = element;
 
@@ -483,11 +466,12 @@ function isInsideNestedEditable( element: ViewElement ) {
 	return false;
 }
 
-// Checks whether the specified `element` is a child of the `parent` element.
-//
-// @param {module:engine/view/element~Element} element An element to check.
-// @param {module:engine/view/element~Element|null} parent A parent for the element.
-// @returns {Boolean}
+/**
+ * Checks whether the specified `element` is a child of the `parent` element.
+ *
+ * @param element An element to check.
+ * @param parent A parent for the element.
+ */
 function isChild( element: ViewElement, parent: ViewElement | null ) {
 	if ( !parent ) {
 		return false;

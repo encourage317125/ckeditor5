@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -7,9 +7,7 @@
  * @module clipboard/utils/viewtoplaintext
  */
 
-import type Item from '@ckeditor/ckeditor5-engine/src/view/item';
-import type Element from '@ckeditor/ckeditor5-engine/src/view/element';
-import type { ViewDocumentFragment } from '@ckeditor/ckeditor5-engine';
+import type { ViewDocumentFragment, ViewElement, ViewItem } from '@ckeditor/ckeditor5-engine';
 
 // Elements which should not have empty-line padding.
 // Most `view.ContainerElement` want to be separate by new-line, but some are creating one structure
@@ -19,10 +17,10 @@ const smallPaddingElements = [ 'figcaption', 'li' ];
 /**
  * Converts {@link module:engine/view/item~Item view item} and all of its children to plain text.
  *
- * @param {module:engine/view/item~Item} viewItem View item to convert.
- * @returns {String} Plain text representation of `viewItem`.
+ * @param viewItem View item to convert.
+ * @returns Plain text representation of `viewItem`.
  */
-export default function viewToPlainText( viewItem: Item | ViewDocumentFragment ): string {
+export default function viewToPlainText( viewItem: ViewItem | ViewDocumentFragment ): string {
 	let text = '';
 
 	if ( viewItem.is( '$text' ) || viewItem.is( '$textProxy' ) ) {
@@ -39,14 +37,14 @@ export default function viewToPlainText( viewItem: Item | ViewDocumentFragment )
 		// They don't have their own text value, so convert their children.
 		let prev = null;
 
-		for ( const child of ( viewItem as Element | ViewDocumentFragment ).getChildren() ) {
+		for ( const child of ( viewItem as ViewElement | ViewDocumentFragment ).getChildren() ) {
 			const childText = viewToPlainText( child );
 
 			// Separate container element children with one or more new-line characters.
 			if ( prev && ( prev.is( 'containerElement' ) || child.is( 'containerElement' ) ) ) {
 				if (
-					smallPaddingElements.includes( ( prev as Element ).name ) ||
-					smallPaddingElements.includes( ( child as Element ).name )
+					smallPaddingElements.includes( ( prev as ViewElement ).name ) ||
+					smallPaddingElements.includes( ( child as ViewElement ).name )
 				) {
 					text += '\n';
 				} else {

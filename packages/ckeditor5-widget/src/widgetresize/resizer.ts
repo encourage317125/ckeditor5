@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -7,104 +7,85 @@
  * @module widget/widgetresize/resizer
  */
 
-import Template from '@ckeditor/ckeditor5-ui/src/template';
-import Rect from '@ckeditor/ckeditor5-utils/src/dom/rect';
-import compareArrays from '@ckeditor/ckeditor5-utils/src/comparearrays';
-
-import { Observable, type DecoratedMethodEvent, type ObservableChangeEvent } from '@ckeditor/ckeditor5-utils/src/observablemixin';
+import { Template } from '@ckeditor/ckeditor5-ui';
+import {
+	Rect,
+	ObservableMixin,
+	compareArrays,
+	type ObservableChangeEvent,
+	type DecoratedMethodEvent
+} from '@ckeditor/ckeditor5-utils';
 
 import ResizeState from './resizerstate';
 import SizeView from './sizeview';
 
 import type { ResizerOptions } from '../widgetresize';
-import type Element from '@ckeditor/ckeditor5-engine/src/view/element';
+import type { ViewElement } from '@ckeditor/ckeditor5-engine';
 
 /**
  * Represents a resizer for a single resizable object.
- *
- * @mixes module:utils/observablemixin~ObservableMixin
  */
-export default class Resizer extends Observable {
+export default class Resizer extends ObservableMixin() {
+	/**
+	 * Flag that indicates whether resizer can be used.
+	 *
+	 * @observable
+	 */
 	declare public isEnabled: boolean;
+
+	/**
+	 * Flag that indicates that resizer is currently focused.
+	 *
+	 * @observable
+	 */
 	declare public isSelected: boolean;
 
 	/**
+	 * Flag that indicates whether resizer is rendered (visible on the screen).
+	 *
 	 * @readonly
+	 * @observable
 	 */
 	declare public isVisible: boolean;
 
+	/**
+	 * Stores the state of the resizable host geometry, such as the original width, the currently proposed height, etc.
+	 *
+	 * Note that a new state is created for each resize transaction.
+	 */
 	private _state!: ResizeState;
+
+	/**
+	 * A view displaying the proposed new element size during the resizing.
+	 */
 	private _sizeView!: SizeView;
+
+	/**
+	 * Options passed to the {@link #constructor}.
+	 */
 	private _options: ResizerOptions;
-	private _viewResizerWrapper: Element | null;
+
+	/**
+	 * A wrapper that is controlled by the resizer. This is usually a widget element.
+	 */
+	private _viewResizerWrapper: ViewElement | null = null;
+
+	/**
+	 * The width of the resized {@link module:widget/widgetresize~ResizerOptions#viewElement viewElement} before the resizing started.
+	 */
 	private _initialViewWidth: string | undefined;
 
 	/**
-	 * @param {module:widget/widgetresize~ResizerOptions} options Resizer options.
+	 * @param options Resizer options.
 	 */
 	constructor( options: ResizerOptions ) {
 		super();
 
-		/**
-		 * Stores the state of the resizable host geometry, such as the original width, the currently proposed height, etc.
-		 *
-		 * Note that a new state is created for each resize transaction.
-		 *
-		 * @readonly
-		 * @member {module:widget/widgetresize/resizerstate~ResizerState} #state
-		 */
-
-		/**
-		 * A view displaying the proposed new element size during the resizing.
-		 *
-		 * @protected
-		 * @readonly
-		 * @member {module:widget/widgetresize/sizeview~SizeView} #_sizeView
-		 */
-
-		/**
-		 * Options passed to the {@link #constructor}.
-		 *
-		 * @private
-		 * @type {module:widget/widgetresize~ResizerOptions}
-		 */
 		this._options = options;
 
-		/**
-		 * A wrapper that is controlled by the resizer. This is usually a widget element.
-		 *
-		 * @private
-		 * @type {module:engine/view/element~Element|null}
-		 */
-		this._viewResizerWrapper = null;
-
-		/**
-		 * The width of the resized {@link module:widget/widgetresize~ResizerOptions#viewElement viewElement} before the resizing started.
-		 *
-		 * @private
-		 * @member {Number|String|undefined} #_initialViewWidth
-		 */
-
-		/**
-		 * Flag that indicates whether resizer can be used.
-		 *
-		 * @observable
-		 */
 		this.set( 'isEnabled', true );
-
-		/**
-		 * Flag that indicates that resizer is currently focused.
-		 *
-		 * @observable
-		 */
 		this.set( 'isSelected', false );
 
-		/**
-		 * Flag that indicates whether resizer is rendered (visible on the screen).
-		 *
-		 * @readonly
-		 * @observable
-		 */
 		this.bind( 'isVisible' ).to( this, 'isEnabled', this, 'isSelected', ( isEnabled, isSelected ) => isEnabled && isSelected );
 
 		this.decorate( 'begin' );
@@ -122,6 +103,11 @@ export default class Resizer extends Observable {
 		}, { priority: 'high' } );
 	}
 
+	/**
+	 * Stores the state of the resizable host geometry, such as the original width, the currently proposed height, etc.
+	 *
+	 * Note that a new state is created for each resize transaction.
+	 */
 	public get state(): ResizeState {
 		return this._state;
 	}
@@ -196,7 +182,7 @@ export default class Resizer extends Observable {
 	 * Creates a new {@link #state} for the current process.
 	 *
 	 * @fires begin
-	 * @param {HTMLElement} domResizeHandle Clicked handle.
+	 * @param domResizeHandle Clicked handle.
 	 */
 	public begin( domResizeHandle: HTMLElement ): void {
 		this._state = new ResizeState( this._options );
@@ -212,7 +198,6 @@ export default class Resizer extends Observable {
 	 * Updates the proposed size based on `domEventData`.
 	 *
 	 * @fires updateSize
-	 * @param {Event} domEventData
 	 */
 	public updateSize( domEventData: MouseEvent ): void {
 		const newSize = this._proposeNewSize( domEventData );
@@ -284,7 +269,7 @@ export default class Resizer extends Observable {
 	/**
 	 * Redraws the resizer.
 	 *
-	 * @param {module:utils/dom/rect~Rect} [handleHostRect] Handle host rectangle might be given to improve performance.
+	 * @param handleHostRect Handle host rectangle might be given to improve performance.
 	 */
 	public redraw( handleHostRect?: Rect ): void {
 		const domWrapper = this._domResizerWrapper;
@@ -355,8 +340,6 @@ export default class Resizer extends Observable {
 
 	/**
 	 * Cleans up the context state.
-	 *
-	 * @protected
 	 */
 	private _cleanup(): void {
 		this._sizeView._dismiss();
@@ -371,13 +354,9 @@ export default class Resizer extends Observable {
 	/**
 	 * Calculates the proposed size as the resize handles are dragged.
 	 *
-	 * @private
-	 * @param {Event} domEventData Event data that caused the size update request. It should be used to calculate the proposed size.
-	 * @returns {Object} return
-	 * @returns {Number} return.width Proposed width.
-	 * @returns {Number} return.height Proposed height.
+	 * @param domEventData Event data that caused the size update request. It should be used to calculate the proposed size.
 	 */
-	private _proposeNewSize( domEventData: MouseEvent ) {
+	private _proposeNewSize( domEventData: MouseEvent ): { width: number; height: number; widthPercents: number } {
 		const state = this.state;
 		const currentCoordinates = extractCoordinates( domEventData );
 		const isCentered = this._options.isCentered ? this._options.isCentered( this ) : true;
@@ -435,9 +414,6 @@ export default class Resizer extends Observable {
 	 * Obtains the resize host.
 	 *
 	 * Resize host is an object that receives dimensions which are the result of resizing.
-	 *
-	 * @protected
-	 * @returns {HTMLElement}
 	 */
 	private _getResizeHost(): HTMLElement {
 		const widgetWrapper = this._domResizerWrapper!.parentElement;
@@ -452,9 +428,6 @@ export default class Resizer extends Observable {
 	 *
 	 * Handle host will not always be an entire widget itself. Take an image as an example. The image widget
 	 * contains an image and a caption. Only the image should be surrounded with handles.
-	 *
-	 * @protected
-	 * @returns {HTMLElement}
 	 */
 	private _getHandleHost(): HTMLElement {
 		const widgetWrapper = this._domResizerWrapper!.parentElement;
@@ -467,9 +440,6 @@ export default class Resizer extends Observable {
 	 *
 	 * Note that this property will have a value only after the element bound with the resizer is rendered
 	 * (otherwise `null`).
-	 *
-	 * @private
-	 * @member {HTMLElement|null}
 	 */
 	private get _domResizerWrapper(): HTMLElement | null {
 		return this._options.editor.editing.view.domConverter.mapViewToDom( this._viewResizerWrapper! ) as any;
@@ -478,8 +448,7 @@ export default class Resizer extends Observable {
 	/**
 	 * Renders the resize handles in the DOM.
 	 *
-	 * @private
-	 * @param {HTMLElement} domElement The resizer wrapper.
+	 * @param domElement The resizer wrapper.
 	 */
 	private _appendHandles( domElement: HTMLElement ) {
 		const resizerPositions = [ 'top-left', 'top-right', 'bottom-right', 'bottom-left' ];
@@ -496,9 +465,6 @@ export default class Resizer extends Observable {
 
 	/**
 	 * Sets up the {@link #_sizeView} property and adds it to the passed `domElement`.
-	 *
-	 * @private
-	 * @param {HTMLElement} domElement
 	 */
 	private _appendSizeUI( domElement: HTMLElement ) {
 		this._sizeView = new SizeView();
@@ -508,32 +474,32 @@ export default class Resizer extends Observable {
 
 		domElement.appendChild( this._sizeView.element! );
 	}
-
-	/**
-	 * @event begin
-	 */
-
-	/**
-	 * @event updateSize
-	 */
-
-	/**
-	 * @event commit
-	 */
-
-	/**
-	 * @event cancel
-	 */
 }
 
+/**
+ * @eventName ~Resizer#begin
+ */
 export type ResizerBeginEvent = DecoratedMethodEvent<Resizer, 'begin'>;
+
+/**
+ * @eventName ~Resizer#cancel
+ */
 export type ResizerCancelEvent = DecoratedMethodEvent<Resizer, 'cancel'>;
+
+/**
+ * @eventName ~Resizer#commit
+ */
 export type ResizerCommitEvent = DecoratedMethodEvent<Resizer, 'commit'>;
+
+/**
+ * @eventName ~Resizer#updateSize
+ */
 export type ResizerUpdateSizeEvent = DecoratedMethodEvent<Resizer, 'updateSize'>;
 
-// @private
-// @param {String} resizerPosition Expected resizer position like `"top-left"`, `"bottom-right"`.
-// @returns {String} A prefixed HTML class name for the resizer element
+/**
+ * @param resizerPosition Expected resizer position like `"top-left"`, `"bottom-right"`.
+ * @returns A prefixed HTML class name for the resizer element
+ */
 function getResizerClass( resizerPosition: string ) {
 	return `ck-widget__resizer__handle-${ resizerPosition }`;
 }

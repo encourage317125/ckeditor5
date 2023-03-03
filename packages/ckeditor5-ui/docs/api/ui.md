@@ -12,7 +12,7 @@ Together with the {@link api/engine editing engine} and the {@link api/core core
 
 ## Documentation
 
-See the introduction to the {@link framework/guides/architecture/ui-library UI library's architecture}.
+See the introduction to the {@link framework/architecture/ui-library UI library's architecture}.
 
 You can also browse the API documentation of this package by using the module tree on the left.
 
@@ -24,7 +24,7 @@ npm install --save @ckeditor/ckeditor5-ui
 
 ## Contribute
 
-The source code of this package is available on GitHub in https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-ui.
+The source code of this package is available on GitHub in [https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-ui](https://github.com/ckeditor/ckeditor5/tree/master/packages/ckeditor5-ui).
 
 ## External links
 

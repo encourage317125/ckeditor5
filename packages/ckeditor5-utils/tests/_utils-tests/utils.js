@@ -1,14 +1,17 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
 import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { Observable } from '../../src/observablemixin';
-import { Emitter } from '../../src/emittermixin';
+import ObservableMixin from '../../src/observablemixin';
+import EmitterMixin from '../../src/emittermixin';
 import { createObserver } from '../_utils/utils';
 
 describe( 'utils - testUtils', () => {
+	const Observable = ObservableMixin();
+	const Emitter = EmitterMixin();
+
 	afterEach( () => {
 		sinon.restore();
 	} );

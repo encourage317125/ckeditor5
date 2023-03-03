@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -324,7 +324,7 @@ export default class PluginCollection {
 				 *
 				 * Soft requirements were introduced in version 26.0.0. If you happen to stumble upon this error
 				 * when upgrading to version 26.0.0, read also the
-				 * {@glink updating/migration-to-26 Migration to 26.0.0} guide.
+				 * {@glink updating/guides/update-to-26 Migration to 26.0.0} guide.
 				 *
 				 * @error plugincollection-soft-required
 				 * @param {String} missingPlugin The name of the required plugin.
@@ -354,7 +354,7 @@ export default class PluginCollection {
 			 * that you tried loading plugins by name. However, unlike CKEditor 4, CKEditor 5 does not implement a "plugin loader".
 			 * This means that CKEditor 5 does not know where to load the plugin modules from. Therefore, you need to
 			 * provide each plugin through a reference (as a constructor function). Check out the examples in
-			 * {@glink installation/advanced/alternative-setups/integrating-from-source "Building from source"}.
+			 * {@glink installation/advanced/alternative-setups/integrating-from-source-webpack "Building from source"}.
 			 *
 			 * @error plugincollection-plugin-not-found
 			 * @param {String} plugin The name of the plugin which could not be loaded.
@@ -577,7 +577,7 @@ export default class PluginCollection {
 			 * They are already built into that editor build and now get added for the second time as dependencies
 			 * of the plugin you are installing.
 			 *
-			 * Read more about {@glink installation/getting-started/installing-plugins installing plugins}.
+			 * Read more about {@glink installation/plugins/installing-plugins installing plugins}.
 			 *
 			 * @error plugincollection-plugin-name-conflict
 			 * @param {String} pluginName The duplicated plugin name.

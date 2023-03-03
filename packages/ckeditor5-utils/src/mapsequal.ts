@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -8,11 +8,11 @@
  */
 
 /**
- * Checks whether given {Map}s are equal, that is has same size and same key-value pairs.
+ * Checks whether given `Map`s are equal, that is has same size and same key-value pairs.
  *
- * @param {Map} mapA The first map to compare.
- * @param {Map} mapB The second map to compare.
- * @returns {Boolean} `true` if given maps are equal, `false` otherwise.
+ * @param mapA The first map to compare.
+ * @param mapB The second map to compare.
+ * @returns `true` if given maps are equal, `false` otherwise.
  */
 export default function mapsEqual<Key>( mapA: Map<Key, unknown>, mapB: Map<Key, unknown> ): boolean {
 	if ( mapA.size != mapB.size ) {

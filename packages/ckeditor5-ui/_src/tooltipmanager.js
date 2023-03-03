@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2022, CKSource Holding sp. z o.o. All rights reserved.
+ * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -22,7 +22,7 @@ const BALLOON_CLASS = 'ck-tooltip';
  * A tooltip manager class for the UI of the editor.
  *
  * **Note**: Most likely you do not have to use the `TooltipManager` API listed below in order to display tooltips. Popular
- * {@glink framework/guides/architecture/ui-library UI components} support tooltips out-of-the-box via observable properties
+ * {@glink framework/architecture/ui-library UI components} support tooltips out-of-the-box via observable properties
  * (see {@link module:ui/button/buttonview~ButtonView#tooltip} and {@link module:ui/button/buttonview~ButtonView#tooltipPosition}).
  *
  * # Displaying tooltips
